@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const API_BASE = '/api';
+const VERSION  = 'v1.4.0';
 
-// Simple time ago
 const timeAgo = (dt) => {
   const diff = Date.now() - new Date(dt).getTime();
   const m = Math.floor(diff / 60000);
@@ -14,14 +14,13 @@ const timeAgo = (dt) => {
   return `${Math.floor(h / 24)} 天前`;
 };
 
-// Global axios defaults
 const api = axios.create({ baseURL: API_BASE });
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken]           = useState(null);
   const [loginForm, setLoginForm]   = useState({ user: '', pass: '' });
-  
+
   const [sites,    setSites]        = useState([]);
   const [changes,  setChanges]      = useState([]);
   const [barkKey,  setBarkKey]      = useState('');
@@ -31,8 +30,10 @@ export default function App() {
   const [discoveredItems, setDiscoveredItems] = useState([]);
   const [checking, setChecking]     = useState(null);
   const [message,  setMessage]      = useState('');
+  // which site's history is expanded
+  const [expandedSite, setExpandedSite] = useState(null);
 
-  // 1. Setup Axios Interceptors for Global 401 Protection
+  // ── Axios interceptor: auto-logout on 401 ───────────────
   useEffect(() => {
     const interceptor = api.interceptors.response.use(
       (res) => res,
@@ -48,7 +49,7 @@ export default function App() {
     return () => api.interceptors.response.eject(interceptor);
   }, []);
 
-  // 2. Set token header globally whenever token changes
+  // ── Set Authorization header on token change ─────────────
   useEffect(() => {
     if (token) {
       api.defaults.headers.common['Authorization'] = token;
@@ -58,60 +59,53 @@ export default function App() {
     }
   }, [token]);
 
-  // 3. Data fetching
+  // ── Data fetching ────────────────────────────────────────
   const fetchData = useCallback(async () => {
     try {
       const [s, c, cfg] = await Promise.all([
-        api.get(`/sites`),
-        api.get(`/changes`),
-        api.get(`/config`),
+        api.get('/sites'),
+        api.get('/changes'),
+        api.get('/config'),
       ]);
       setSites(s.data.sites);
       setChanges(c.data.changes);
       setBarkKey(cfg.data.bark_key || '');
-    } catch(e) { console.error("Fetch Data Error:", e); }
+    } catch(e) { console.error('Fetch Data Error:', e); }
   }, []);
 
-  // 4. Initial Auth Check on Mount
+  // ── Initial auth check ───────────────────────────────────
   useEffect(() => {
-    const storedToken = localStorage.getItem('access_token');
-    if (storedToken) {
-      // Set the default header synchronously so immediate subsequent requests don't fail
-      api.defaults.headers.common['Authorization'] = storedToken;
-      api.get(`/sites`)
-        .then(() => {
-          setToken(storedToken);
-          setIsLoggedIn(true);
-          fetchData();
-        })
-        .catch(() => {
-          localStorage.removeItem('access_token');
-        });
+    const stored = localStorage.getItem('access_token');
+    if (stored) {
+      api.defaults.headers.common['Authorization'] = stored;
+      api.get('/sites')
+        .then(() => { setToken(stored); setIsLoggedIn(true); fetchData(); })
+        .catch(() => { localStorage.removeItem('access_token'); });
     }
   }, [fetchData]);
 
-  // 5. Polling
+  // ── Polling every 10s ────────────────────────────────────
   useEffect(() => {
     if (!isLoggedIn) return;
-    const t = setInterval(() => fetchData(), 10000);
+    const t = setInterval(fetchData, 10000);
     return () => clearInterval(t);
   }, [isLoggedIn, fetchData]);
+
+  const flash = (msg) => { setMessage(msg); setTimeout(() => setMessage(''), 3000); };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post(`/login`, loginForm);
+      const res = await api.post('/login', loginForm);
       setToken(res.data.token);
       setIsLoggedIn(true);
-      setTimeout(() => fetchData(), 100); // slight delay to ensure headers are applied
-    } catch (e) { 
-      alert('登录失败：用户名或密码错误'); 
-    }
+      setTimeout(fetchData, 100);
+    } catch { alert('登录失败：用户名或密码错误'); }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
-    setToken(null); 
+    setToken(null);
     setIsLoggedIn(false);
   };
 
@@ -119,11 +113,10 @@ export default function App() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post(`/sites`, newSite);
+      await api.post('/sites', newSite);
       setNewSite({ url: '', name: '', interval: 60 });
-      setDiscoveredItems([]); // Clear after adding
-      setMessage('监控目标已添加！');
-      setTimeout(() => setMessage(''), 3000);
+      setDiscoveredItems([]);
+      flash('✅ 监控目标已添加！');
       fetchData();
     } catch (err) { alert(err.response?.data?.error || '添加失败'); }
     setLoading(false);
@@ -135,9 +128,9 @@ export default function App() {
     try {
       const res = await api.post('/discover', { url: newSite.url });
       setDiscoveredItems(res.data.products);
-      if (res.data.products.length === 0) setMessage('未在页面上发现明显商品');
-      else setMessage(`发现 ${res.data.products.length} 个可能的目标`);
-      setTimeout(() => setMessage(''), 3000);
+      flash(res.data.products.length > 0
+        ? `✨ 发现 ${res.data.products.length} 个可选目标`
+        : '⚠️ 未在页面上发现明显商品');
     } catch (err) {
       alert('扫描失败：' + (err.response?.data?.error || err.message));
     }
@@ -148,15 +141,17 @@ export default function App() {
     setNewSite({
       ...newSite,
       name: p.name,
-      // If the product has a specific URL, we use it, otherwise keep the scan URL
-      url: p.url && p.url.startsWith('http') ? p.url : newSite.url 
+      url: p.url && p.url.startsWith('http') ? p.url : newSite.url,
     });
   };
 
   const deleteSite = async (id) => {
-    if (!window.confirm('确认删除该监控目标？')) return;
-    await api.delete(`/sites/${id}`);
-    fetchData();
+    if (!window.confirm('确认删除该监控目标？（相关历史记录同时清除）')) return;
+    try {
+      await api.delete(`/sites/${id}`);
+      flash('🗑️ 已删除');
+      fetchData();
+    } catch (err) { alert(err.response?.data?.error || '删除失败'); }
   };
 
   const checkNow = async (id) => {
@@ -170,12 +165,29 @@ export default function App() {
 
   const saveBark = async () => {
     try {
-      await api.post(`/settings`, { bark_key: barkKey });
-      alert('Bark 配置已保存！');
+      await api.post('/settings', { bark_key: barkKey });
+      flash('✅ Bark 配置已保存！');
     } catch { alert('保存失败'); }
   };
 
-  /* ========== 登录页 ========== */
+  const clearSiteChanges = async (siteId, e) => {
+    e.stopPropagation();
+    if (!window.confirm('确认清除该站点的所有历史记录？')) return;
+    try {
+      await api.delete(`/changes/${siteId}`);
+      flash('🗑️ 历史记录已清除');
+      fetchData();
+    } catch (err) { alert(err.response?.data?.error || '清除失败'); }
+  };
+
+  // Group changes by site
+  const changesBySite = changes.reduce((acc, c) => {
+    if (!acc[c.site_id]) acc[c.site_id] = { site_name: c.site_name, site_url: c.site_url, items: [] };
+    acc[c.site_id].items.push(c);
+    return acc;
+  }, {});
+
+  /* ──────────────── 登录页 ──────────────── */
   if (!isLoggedIn) return (
     <div className="login-page">
       <div className="glass-card login-card">
@@ -184,7 +196,7 @@ export default function App() {
             <span className="login-title-icon">🔑</span>
             管理后台
           </h1>
-          <p className="login-sub">NanoMonitor Console</p>
+          <p className="login-sub">NanoMonitor Console · {VERSION}</p>
         </div>
         <form onSubmit={handleLogin}>
           <div className="form-group">
@@ -204,7 +216,7 @@ export default function App() {
     </div>
   );
 
-  /* ========== 主仪表盘 ========== */
+  /* ──────────────── 主仪表盘 ──────────────── */
   return (
     <div className="page">
       {/* 顶栏 */}
@@ -214,7 +226,7 @@ export default function App() {
             <span className="header-icon">🛰️</span>
             监控面板
             <span style={{color:'var(--primary)',fontWeight:400,fontSize:18,fontStyle:'italic',marginRight:8}}>控制台</span>
-            <span className="badge badge-active" style={{verticalAlign:'middle',fontSize:10}}>v1.3.0</span>
+            <span className="badge badge-active" style={{verticalAlign:'middle',fontSize:10}}>{VERSION}</span>
           </div>
           <div className="header-sub">
             🛡️ <span>安全会话进行中</span>
@@ -260,7 +272,8 @@ export default function App() {
                     value={newSite.url} onChange={e => setNewSite({...newSite, url: e.target.value})} />
                 </div>
                 <div className="form-actions" style={{display:'flex',gap:8,marginTop:12}}>
-                  <button type="button" className="btn-secondary" onClick={scanPage} disabled={discovering || !newSite.url} style={{flex:1}}>
+                  <button type="button" className="btn-secondary" onClick={scanPage}
+                    disabled={discovering || !newSite.url} style={{flex:1}}>
                     {discovering ? <span className="spin">⟳</span> : '🔍'} 扫描商品
                   </button>
                   <button type="submit" className="btn-primary" disabled={loading} style={{flex:1.5}}>
@@ -270,12 +283,12 @@ export default function App() {
               </form>
 
               {discoveredItems.length > 0 && (
-                <div className="discovery-results" style={{marginTop:20, borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:15}}>
+                <div style={{marginTop:20, borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:15}}>
                   <label className="form-label" style={{display:'block', marginBottom:10}}>✨ 智能识别结果 (点击选择):</label>
-                  <div className="discovery-list" style={{maxHeight:300, overflowY:'auto', display:'flex', flexDirection:'column', gap:8}}>
+                  <div style={{maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:8}}>
                     {discoveredItems.map((p, idx) => (
-                      <div key={idx} className="discovery-item glass-card" onClick={() => selectProduct(p)} 
-                        style={{padding:'10px', fontSize:13, cursor:'pointer', transition:'transform 0.2s', border:'1px solid rgba(255,255,255,0.05)'}}>
+                      <div key={idx} className="glass-card" onClick={() => selectProduct(p)}
+                        style={{padding:'10px', fontSize:13, cursor:'pointer', border:'1px solid rgba(255,255,255,0.06)'}}>
                         <div style={{fontWeight:'bold', color:'var(--primary)', marginBottom:4}}>{p.name}</div>
                         <div style={{display:'flex', justifyContent:'space-between', opacity:0.8}}>
                           <span>💰 {p.price}</span>
@@ -306,10 +319,11 @@ export default function App() {
 
         {/* 右侧主区 */}
         <div className="content">
+          {/* 监控列表 */}
           <div className="glass-card">
             <div className="card-header">
               <div className="card-header-title">🌍 监视中的资产 ({sites.length})</div>
-              <button className="refresh-btn" onClick={() => fetchData()} title="刷新">🔄</button>
+              <button className="refresh-btn" onClick={fetchData} title="刷新">🔄</button>
             </div>
             <div className="site-list">
               {sites.length === 0
@@ -318,7 +332,7 @@ export default function App() {
                   <div key={site.id} className="site-item">
                     <div className="site-info">
                       <div className={`site-icon${site.status==='checking'?' checking':site.status==='error'?' error':''}`}>
-                        {(checking===site.id||site.status==='checking')
+                        {(checking===site.id || site.status==='checking')
                           ? <span className="spin" style={{fontSize:18}}>⟳</span>
                           : '🌐'}
                       </div>
@@ -338,8 +352,8 @@ export default function App() {
                           {site.last_checked && site.status==='idle' && <span className="badge badge-active">● 正常</span>}
                         </div>
                         {site.status==='error' && site.error_message && (
-                          <div style={{fontSize:11, color:'#f87171', marginTop:4, maxWidth:300, wordBreak:'break-all', opacity:0.85}}>
-                            ⚠️ {site.error_message.substring(0, 120)}{site.error_message.length > 120 ? '...' : ''}
+                          <div style={{fontSize:11, color:'#f87171', marginTop:4, maxWidth:360, wordBreak:'break-all', opacity:0.85}}>
+                            ⚠️ {site.error_message.substring(0, 150)}{site.error_message.length > 150 ? '...' : ''}
                           </div>
                         )}
                       </div>
@@ -358,33 +372,70 @@ export default function App() {
             </div>
           </div>
 
+          {/* 变动历史：按站点分组 */}
           <div className="glass-card">
             <div className="card-header">
               <div className="card-header-title">🔔 变动警报 Feed</div>
               <span className="badge badge-live">实时同步</span>
             </div>
-            <div className="change-list">
-              {changes.length === 0
-                ? <div className="empty-state">暂无捕捉到的变动信号</div>
-                : changes.map(c => (
-                  <div key={c.id} className="change-item">
-                    <div className="change-icon">📢</div>
-                    <div className="change-body">
-                      <div className="change-row">
-                        <span className="change-name">{c.site_name}</span>
-                        <span className="change-time">{timeAgo(c.detected_at)}</span>
+
+            {Object.keys(changesBySite).length === 0
+              ? <div className="empty-state">暂无捕捉到的变动信号</div>
+              : Object.entries(changesBySite).map(([siteId, group]) => (
+                <div key={siteId} style={{borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+                  {/* Site group header */}
+                  <div
+                    onClick={() => setExpandedSite(expandedSite === siteId ? null : siteId)}
+                    style={{
+                      display:'flex', alignItems:'center', justifyContent:'space-between',
+                      padding:'14px 24px', cursor:'pointer',
+                      background: expandedSite === siteId ? 'rgba(14,165,233,0.05)' : 'transparent',
+                      transition:'background 0.2s',
+                    }}>
+                    <div style={{display:'flex', alignItems:'center', gap:10}}>
+                      <span style={{fontSize:18}}>
+                        {expandedSite === siteId ? '▾' : '▸'}
+                      </span>
+                      <div>
+                        <div style={{fontWeight:800, fontSize:13}}>{group.site_name}</div>
+                        <div style={{fontSize:11, color:'var(--muted)', marginTop:2}}>
+                          {group.items.length} 条记录 · 最近 {timeAgo(group.items[0].detected_at)}
+                        </div>
                       </div>
-                      <div className="change-desc">{c.diff_summary}</div>
                     </div>
+                    <button
+                      className="btn-icon danger"
+                      title="清除该站点所有历史"
+                      onClick={(e) => clearSiteChanges(siteId, e)}
+                      style={{width:32, height:32, fontSize:13}}>
+                      🗑️
+                    </button>
                   </div>
-                ))
-              }
-            </div>
+
+                  {/* Change items (collapsed by default) */}
+                  {expandedSite === siteId && (
+                    <div style={{paddingBottom:8}}>
+                      {group.items.map(c => (
+                        <div key={c.id} className="change-item" style={{paddingLeft:48}}>
+                          <div className="change-icon">📢</div>
+                          <div className="change-body">
+                            <div className="change-row">
+                              <span className="change-name" style={{fontSize:11, opacity:0.7}}>{timeAgo(c.detected_at)}</span>
+                            </div>
+                            <div className="change-desc" style={{whiteSpace:'pre-line'}}>{c.diff_summary}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            }
           </div>
         </div>
       </div>
 
-      <footer>&copy; 2026 NanoMonitor 高级集群监视系统 v1.3.0</footer>
+      <footer>&copy; 2026 NanoMonitor 高级集群监视系统 {VERSION}</footer>
     </div>
   );
 }

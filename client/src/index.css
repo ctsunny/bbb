@@ -100,6 +100,26 @@ body {
 .btn-primary:active { transform: scale(0.96); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* 次要按钮 */
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
+.btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* 危险按钮 */
 .btn-danger {
   background: rgba(239,68,68,0.12);

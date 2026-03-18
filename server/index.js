@@ -83,7 +83,10 @@ app.post('/api/sites', auth, (req, res) => {
 });
 
 app.delete('/api/sites/:id', auth, (req, res) => {
-  db.prepare('DELETE FROM sites WHERE id = ?').run(req.params.id);
+  const id = req.params.id;
+  // Manually delete child records first (old DBs may not have CASCADE)
+  db.prepare('DELETE FROM changes WHERE site_id = ?').run(id);
+  db.prepare('DELETE FROM sites WHERE id = ?').run(id);
   res.json({ success: true });
 });
 
@@ -98,11 +101,17 @@ app.post('/api/check-now/:id', auth, async (req, res) => {
 app.get('/api/changes', auth, (req, res) => {
   res.json({
     changes: db.prepare(
-      `SELECT changes.*, sites.name as site_name
+      `SELECT changes.*, sites.name as site_name, sites.url as site_url
        FROM changes JOIN sites ON changes.site_id = sites.id
-       ORDER BY detected_at DESC LIMIT 50`
+       ORDER BY detected_at DESC LIMIT 200`
     ).all()
   });
+});
+
+// Clear all changes for a specific site
+app.delete('/api/changes/:siteId', auth, (req, res) => {
+  db.prepare('DELETE FROM changes WHERE site_id = ?').run(req.params.siteId);
+  res.json({ success: true });
 });
 
 app.post('/api/settings', auth, (req, res) => {
@@ -148,5 +157,5 @@ app.use((req, res, next) => {
 cron.schedule(CHECK_INTERVAL, () => runMonitor());
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`NanoMonitor v1.2.0 running → http://0.0.0.0:${PORT}`);
+  console.log(`NanoMonitor v1.4.0 running → http://0.0.0.0:${PORT}`);
 });
