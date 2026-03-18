@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# NanoMonitor / BWPanel Management Script
+# NanoMonitor / BWPanel 管理脚本 - 中文版
 
-# Colors
+# 颜色控制
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m' # 无颜色
 
 SERVER_DIR="$(cd "$(dirname "$0")/server" && pwd)"
 DB_PATH="$SERVER_DIR/monitor.db"
 
-# --- Functions ---
+# --- 功能函数 ---
 get_setting() {
     sqlite3 "$DB_PATH" "SELECT value FROM settings WHERE key = '$1';"
 }
@@ -23,7 +23,7 @@ update_setting() {
 
 show_config() {
     clear
-    echo -e "${BLUE}=== Current Panel Configuration ===${NC}"
+    echo -e "${BLUE}=== 当前面板配置信息 ===${NC}"
     
     local USER=$(get_setting "admin_user")
     local PASS=$(get_setting "admin_pass")
@@ -32,83 +32,86 @@ show_config() {
     local BARK=$(get_setting "bark_key")
     local IP=$(curl -s ifconfig.me)
 
-    echo -e "Panel URL    : ${YELLOW}http://$IP:5173/console-$PATH_SUB${NC}"
-    echo -e "Username     : ${GREEN}$USER${NC}"
-    echo -e "Password     : ${RED}$PASS${NC}"
-    echo -e "Access Token : ${BLUE}$TOKEN${NC}"
-    echo -e "Bark URL     : ${BARK:-'Not Configured'}"
-    echo -e "Common Cmds : systemctl status monitor | journalctl -u monitor -f"
-    echo -e "Management Script: monitor-menu"
+    echo -e "面板地址    : ${YELLOW}http://$IP:5173/console-$PATH_SUB${NC}"
+    echo -e "用户名      : ${GREEN}$USER${NC}"
+    echo -e "登录密码    : ${RED}$PASS${NC}"
+    echo -e "访问令牌    : ${BLUE}$TOKEN${NC}"
+    echo -e "Bark 推送   : ${BARK:-'未配置'}"
+    echo -e "常用命令    : systemctl status monitor | journalctl -u monitor -f"
+    echo -e "管理快捷键  : monitor-menu"
     echo "==================================="
-    read -p "Press any key to return to menu..." -n1 -s
+    read -p "按任意键返回菜单..." -n1 -s
 }
 
 reset_pass() {
     local NEW_PASS=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | fold -w 8 | head -n 1)
     update_setting "admin_pass" "$NEW_PASS"
-    echo -e "${GREEN}Password reset successfully: $NEW_PASS${NC}"
+    echo -e "${GREEN}密码重置成功: $NEW_PASS${NC}"
     sleep 2
 }
 
 reset_token() {
     local NEW_TOKEN=$(openssl rand -hex 16)
     update_setting "reg_token" "$NEW_TOKEN"
-    echo -e "${GREEN}Access Token reset successfully: $NEW_TOKEN${NC}"
+    echo -e "${GREEN}访问令牌重置成功: $NEW_TOKEN${NC}"
     sleep 2
 }
 
 reset_path() {
     local NEW_PATH=$(openssl rand -hex 8)
     update_setting "access_path" "$NEW_PATH"
-    echo -e "${GREEN}Access Path reset successfully: console-$NEW_PATH${NC}"
+    echo -e "${GREEN}访问路径重置成功: console-$NEW_PATH${NC}"
     sleep 2
 }
 
 config_bark() {
-    read -p "Enter Bark Key: " BARK_KEY
+    read -p "请输入 Bark Key: " BARK_KEY
     if [ ! -z "$BARK_KEY" ]; then
         update_setting "bark_key" "$BARK_KEY"
-        echo -e "${GREEN}Bark Key updated!${NC}"
+        echo -e "${GREEN}Bark 推送配置已更新！${NC}"
     fi
     sleep 2
 }
 
-# --- Main Menu ---
+# --- 主菜单 ---
 main_menu() {
     while true; do
         clear
-        echo "======== NanoMonitor Management Menu ========"
-        echo " 1. Install / Reinstall Server"
-        echo " 2. Update System (Pull latest)"
-        echo " 3. View Current Config and Panel URL"
-        echo " 4. Reset Admin Password"
-        echo " 5. Reset Panel Access Path"
-        echo " 6. Reset Client Access Token"
-        echo " 7. Configure Bark Key"
-        echo " 8. View Service Logs"
-        echo " 9. Restart Service"
-        echo " 10. Uninstall Monitor System"
-        echo " 11. Generate Installation Shortcut"
-        echo " 0. Exit"
-        echo "============================================="
-        read -p "Please select an option [0-11]: " opt
+        echo "======== NanoMonitor 管理菜单 (BWPanel 版) ========"
+        echo " 1. 安装 / 重新安装服务端 (依赖环境)"
+        echo " 2. 升级系统 (自动拉取最新 Release)"
+        echo " 3. 查看当前配置与面板地址"
+        echo " 4. 重置管理员密码"
+        echo " 5. 重置面板访问路径 (子目录)"
+        echo " 6. 重置客户端注册 Token"
+        echo " 7. 配置 Bark 推送推送"
+        echo " 8. 查看服务运行状态与日志"
+        echo " 9. 重启监控服务"
+        echo " 10. 完整卸载监控系统"
+        echo " 11. 生成 'monitor' 快捷启动命令"
+        echo " 0. 退出脚本"
+        echo "================================================="
+        read -p "请选择操作 [0-11]: " opt
         
         case $opt in
             1) 
-                echo -e "${YELLOW}Installing/Reinstalling dependencies (Server & Client)...${NC}"
+                echo -e "${YELLOW}正在安装/重装依赖 (Server & Client)...${NC}"
                 (cd server && npm install)
                 (cd client && npm install)
-                echo -e "${GREEN}Dependencies installed! Starting initial run...${NC}"
-                node server/index.js &
-                sleep 5
+                echo -e "${GREEN}依赖安装完成！正在尝试启动初始环境...${NC}"
+                if [ -f server/index.js ]; then
+                   node server/index.js > /dev/null 2>&1 &
+                   echo "服务端已在后台启动。"
+                fi
+                sleep 3
                 ;;
             2) 
-                echo -e "${YELLOW}Updating from GitHub...${NC}"
+                echo -e "${YELLOW}正在从 GitHub 拉取代码...${NC}"
                 git pull
                 (cd server && npm install)
                 (cd client && npm install)
-                echo -e "${GREEN}System Updated. Restarting...${NC}"
-                systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo "Please manual restart."
+                echo -e "${GREEN}系统已更新，正在尝试重启服务...${NC}"
+                systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo "请手动重启服务。"
                 sleep 2
                 ;;
             3) show_config ;;
@@ -117,38 +120,38 @@ main_menu() {
             6) reset_token ;;
             7) config_bark ;;
             8) 
-                echo -e "${BLUE}Viewing real-time logs (Ctrl+C to stop)...${NC}"
-                journalctl -u monitor -f 2>/dev/null || tail -f server/logs.log 2>/dev/null || echo "Logs not found."
+                echo -e "${BLUE}正在查看实时日志 (按 Ctrl+C 退出)...${NC}"
+                journalctl -u monitor -f 2>/dev/null || tail -f server/logs.log 2>/dev/null || echo "未找到日志文件。"
                 sleep 1 
                 ;;
             9) 
-                echo -e "${YELLOW}Restarting Monitor Service...${NC}"
-                systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo "Restarted failed. Try manually."
+                echo -e "${YELLOW}正在重启监控服务...${NC}"
+                systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo "重启失败，请检查服务安装情况。"
                 sleep 2
                 ;;
             10) 
-                read -p "Are you SURE you want to uninstall? Content will be lost. [y/N]: " confirm
+                read -p "确定要卸载吗？所有监控数据将丢失！ [y/N]: " confirm
                 if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
-                    echo -e "${RED}Uninstalling...${NC}"
+                    echo -e "${RED}正在执行卸载...${NC}"
                     rm "$DB_PATH"
-                    echo -e "${YELLOW}Database purged. Manually delete the 'bbb' directory to finish.${NC}"
+                    echo -e "${YELLOW}数据库已清理，请手动删除 'bbb' 文件夹完成卸载。${NC}"
                     exit 0
                 fi
                 ;;
             11) 
-                echo "alias monitor='./menu.sh'" >> ~/.bashrc
-                echo -e "${GREEN}Created 'monitor' shortcut! Restart your shell to use it.${NC}"
+                echo "alias monitor='cd $(pwd) && ./menu.sh'" >> ~/.bashrc
+                echo -e "${GREEN}快捷命令 'monitor' 已创建！请执行 'source ~/.bashrc' 或重新进入终端。${NC}"
                 sleep 2
                 ;;
             0) exit 0 ;;
-            *) echo -e "${RED}Invalid Option!${NC}"; sleep 1 ;;
+            *) echo -e "${RED}输入错误，请输入有效选项！${NC}"; sleep 1 ;;
         esac
     done
 }
 
-# Ensure DB exists for initial run
+# 检查数据库
 if [ ! -f "$DB_PATH" ]; then
-    echo "Monitor database not found. Please run individual setup first."
+    echo "警告: 监控数据库尚未初始化。请先运行选项 1。"
 fi
 
 main_menu
