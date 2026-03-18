@@ -2,213 +2,220 @@ const puppeteer = require('puppeteer');
 const db = require('./db');
 const { sendBarkNotification } = require('./notify');
 
-// Optimization 2: Common Product Selectors Cache
-const PRODUCT_SELECTORS = [
-  '[class*="product"]', '[class*="item"]', '[id*="product"]', '[id*="item"]', 
-  'article', 'li', 'section', '.price', '.amount'
+// ── Puppeteer 启动参数 ──────────────────────────────────────────
+const LAUNCH_ARGS = [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-accelerated-2d-canvas',
+  '--disable-gpu',
+  '--window-size=1280,800',
 ];
 
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+// ── 启动浏览器 ──────────────────────────────────────────────────
+const launchBrowser = () => puppeteer.launch({ headless: 'new', args: LAUNCH_ARGS });
+
+// ── 从页面提取有意义的文本快照 ───────────────────────────────────
+// 策略：忽略导航/菜单/脚本，聚焦于主体内容区域
+const extractSnapshot = async (page) => {
+  return page.evaluate(() => {
+    // 移除干扰节点
+    const NOISE = ['script', 'style', 'noscript', 'nav', 'footer', 'header', 'aside', 'iframe', 'svg'];
+    const clone = document.body.cloneNode(true);
+    NOISE.forEach(tag => clone.querySelectorAll(tag).forEach(el => el.remove()));
+
+    // 提取主要文本行（去重、去空行）
+    const lines = [];
+    const seen = new Set();
+
+    const walk = (el) => {
+      if (!el) return;
+      if (el.nodeType === Node.TEXT_NODE) {
+        const t = el.textContent.replace(/\s+/g, ' ').trim();
+        // 过滤掉太短或已重复的行
+        if (t.length > 5 && !seen.has(t)) {
+          seen.add(t);
+          lines.push(t);
+        }
+        return;
+      }
+      for (const child of el.childNodes) walk(child);
+    };
+    walk(clone);
+
+    // 只保留前 300 行，避免超大快照
+    return lines.slice(0, 300);
+  });
+};
+
+// ── 计算智能 diff ───────────────────────────────────────────────
+const smartDiff = (oldLines, newLines) => {
+  const oldSet = new Set(oldLines);
+  const newSet = new Set(newLines);
+
+  const added   = newLines.filter(l => !oldSet.has(l));
+  const removed = oldLines.filter(l => !newSet.has(l));
+
+  return { added, removed };
+};
+
+// ── 生成人类可读的变动摘要 ─────────────────────────────────────
+const buildSummary = (siteName, added, removed) => {
+  const parts = [];
+  if (added.length > 0) {
+    parts.push(`🆕 新增 ${added.length} 项：${added.slice(0, 3).join(' | ')}`);
+  }
+  if (removed.length > 0) {
+    parts.push(`🗑️ 消失 ${removed.length} 项：${removed.slice(0, 3).join(' | ')}`);
+  }
+  return parts.join('\n') || '内容有变动但无法提取摘要';
+};
+
+// ── 检查单个站点 ────────────────────────────────────────────────
 const checkSite = async (site) => {
   let browser;
   try {
-    // Update status to checking
     db.prepare('UPDATE sites SET status = ? WHERE id = ?').run('checking', site.id);
 
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage', // Memory optimization for VPS
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
-      ]
-    });
-    
+    browser = await launchBrowser();
     const page = await browser.newPage();
-    
-    // Optimization 3: Resource Blocking (Save bandwidth/CPU)
+    await page.setUserAgent(USER_AGENT);
+
+    // 阻塞图片/字体/多媒体（省带宽）——但保留 JS/XHR（动态页面需要）
     await page.setRequestInterception(true);
-    page.on('request', (req) => {
-      const type = req.resourceType();
-      if (['image', 'font', 'stylesheet', 'media'].includes(type) && !site.url.includes('api')) {
+    page.on('request', req => {
+      if (['image', 'font', 'media'].includes(req.resourceType())) {
         req.abort();
       } else {
         req.continue();
       }
     });
 
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36');
     await page.goto(site.url, { waitUntil: 'networkidle2', timeout: 45000 });
 
-    // Optimization 4: Advanced Product Extraction (JSON-LD + Selectors)
-    const extractionResult = await page.evaluate((selectors) => {
-      const results = [];
-      
-      // Try JSON-LD first (most accurate for e-commerce)
-      const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-      scripts.forEach(s => {
-        try {
-          const data = JSON.parse(s.innerText);
-          if (data['@type'] === 'Product' || data['@type'] === 'Offer') {
-            results.push(`${data.name || 'Product'} - ${data.offers?.price || 'N/A'} ${data.offers?.priceCurrency || ''}`);
-          }
-        } catch(e) {}
-      });
+    // 等待页面主体内容稳定（给动态渲染多一点时间）
+    await new Promise(r => setTimeout(r, 1500));
 
-      if (results.length === 0) {
-        // Fallback to heuristic selectors
-        const candidates = document.querySelectorAll(selectors.join(','));
-        candidates.forEach(el => {
-          const text = el.innerText.trim();
-          if (text.length > 5 && text.length < 300) {
-             if (/[\$\d\.,]{2,10}/.test(text) || /[￥\d\.,]{2,10}/.test(text)) {
-                const cleanText = text.replace(/\s+/g, ' ');
-                if (!results.includes(cleanText)) results.push(cleanText);
-             }
-          }
-        });
-      }
-      
-      return results.length > 0 ? results : [document.body.innerText.substring(0, 1000)];
-    }, PRODUCT_SELECTORS);
-
-    const currentContent = JSON.stringify(extractionResult);
+    const currentLines = await extractSnapshot(page);
+    const currentContent = JSON.stringify(currentLines);
 
     if (site.last_content && site.last_content !== currentContent) {
-      // Change detected!
-      const oldArr = JSON.parse(site.last_content || "[]");
-      const newItems = extractionResult.filter(i => !oldArr.includes(i));
-      const removedItems = oldArr.filter(i => !extractionResult.includes(i));
-      
-      const diffSummary = `Changed: ${newItems.length} new items, ${removedItems.length} removed. First change: ${newItems[0] || 'Unknown'}`;
-      
-      db.prepare('INSERT INTO changes (site_id, diff_summary, full_snapshot) VALUES (?, ?, ?)')
-        .run(site.id, diffSummary, currentContent);
-      
-      await sendBarkNotification(`Target Update: ${site.name}`, diffSummary, site.url);
+      const oldLines = JSON.parse(site.last_content);
+      const { added, removed } = smartDiff(oldLines, currentLines);
+
+      // 过滤掉极小的噪音（只有1项新增且是时间类内容，不报告）
+      const isNoise = added.length + removed.length < 2 &&
+        added.concat(removed).every(l => /^\d{1,2}[:\-\/]\d{2}/.test(l) || l.length < 8);
+
+      if (!isNoise) {
+        const diffSummary = buildSummary(site.name, added, removed);
+        db.prepare('INSERT INTO changes (site_id, diff_summary, full_snapshot) VALUES (?, ?, ?)')
+          .run(site.id, diffSummary, currentContent);
+        await sendBarkNotification(`🔔 ${site.name} 有更新！`, diffSummary, site.url);
+      }
     }
 
     db.prepare('UPDATE sites SET last_content = ?, last_checked = CURRENT_TIMESTAMP, status = ?, error_message = NULL WHERE id = ?')
       .run(currentContent, 'idle', site.id);
 
   } catch (error) {
-    console.error(`Error checking ${site.url}:`, error.message);
+    console.error(`[checkSite] Error @ ${site.url}:`, error.message);
     db.prepare('UPDATE sites SET status = ?, error_message = ? WHERE id = ?')
-      .run('error', error.message, site.id);
+      .run('error', error.message.substring(0, 300), site.id);
   } finally {
     if (browser) await browser.close();
   }
 };
 
+// ── 批量运行监控 ────────────────────────────────────────────────
 const runMonitor = async () => {
-  const activeSites = db.prepare('SELECT * FROM sites WHERE is_active = 1').all();
+  const activeSites = db.prepare("SELECT * FROM sites WHERE is_active = 1").all();
   for (const site of activeSites) {
-    // Skip if already checking to avoid overlap on slow sites
     if (site.status === 'checking') continue;
     await checkSite(site);
   }
 };
 
+// ── 智能商品发现 ────────────────────────────────────────────────
 const discoverProducts = async (url) => {
   let browser;
   try {
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    });
+    browser = await launchBrowser();
     const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36');
+    await page.setUserAgent(USER_AGENT);
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    await new Promise(r => setTimeout(r, 1000));
 
-    const products = await page.evaluate(() => {
-      const items = [];
-      
-      // 1. Try JSON-LD
-      const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-      scripts.forEach(s => {
+    const items = await page.evaluate(() => {
+      const results = [];
+
+      // ── 策略 1: JSON-LD 结构化商品数据（最准确）
+      document.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
         try {
-          const data = JSON.parse(s.innerText);
-          const processItem = (item) => {
-            if (item['@type'] === 'Product' || item['@type'] === 'Offer') {
-              items.push({
-                name: item.name || 'Unknown Product',
-                price: item.offers?.price || 'N/A',
-                currency: item.offers?.priceCurrency || '',
-                image: item.image || '',
-                url: item.url || window.location.href
+          const data = JSON.parse(s.textContent);
+          const process = (d) => {
+            if (d['@type'] === 'Product' || d['@type'] === 'Offer') {
+              results.push({
+                name: d.name || '未知商品',
+                price: d.offers?.price ? `${d.offers.priceCurrency || ''}${d.offers.price}` : 'N/A',
+                image: Array.isArray(d.image) ? d.image[0] : (d.image || ''),
+                url: d.url || location.href,
               });
             }
           };
-          if (Array.isArray(data)) data.forEach(processItem);
-          else processItem(data);
-        } catch(e) {}
+          if (Array.isArray(data)) data.forEach(process);
+          else process(data);
+        } catch (e) {}
       });
 
-      if (items.length > 0) return items;
+      if (results.length > 0) return results;
 
-      // 2. Heuristic: Look for elements that look like price + text
-      const priceRegex = /([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?(元|\/月|起|Monthly|每月))/i;
-      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null, false);
-      let node;
-      const candidates = [];
-      
-      while (node = walk.nextNode()) {
-        let isPrice = false;
-        if (node.nodeType === Node.TEXT_NODE) {
-          if (priceRegex.test(node.textContent.trim())) isPrice = true;
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
-          const className = (node.className || '').toString().toLowerCase();
-          const id = (node.id || '').toString().toLowerCase();
-          if (className.includes('price') || className.includes('amount') || id.includes('price')) {
-            isPrice = true;
-          }
-        }
-
-        if (isPrice) {
-          let parent = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-          // Look for container (usually a box containing name + price)
-          for (let i = 0; i < 6; i++) {
-            if (!parent) break;
-            const parentText = parent.innerText;
-            if (parentText.length > 10 && parentText.length < 800) {
-              // Priority: elements with headings or specific tags are better candidates
-              if (parent.querySelector('h1,h2,h3,h4,h5,h6,strong,b') || parent.className.includes('item') || parent.className.includes('product')) {
-                candidates.push(parent);
-                break;
-              }
-            }
-            parent = parent.parentElement;
-          }
-        }
-      }
-
-      // Deduplicate and extract details from candidates
+      // ── 策略 2: 寻找常见商品卡片容器
+      const CARD_SELECTORS = [
+        '[class*="item"]', '[class*="card"]', '[class*="product"]',
+        '[class*="goods"]', '[class*="article"]', 'article', 'li.feed-item'
+      ];
+      const PRICE_RE = /([￥$¥]\s?\d[\d,.]*|\d[\d,.]*\s?(元|\/月|起|RMB))/i;
       const seen = new Set();
-      candidates.forEach(el => {
-        const fullText = el.innerText.replace(/\s+/g, ' ').trim();
-        if (seen.has(fullText) || fullText.length < 5) return;
-        seen.add(fullText);
 
-        // Name extraction: try to find the boldest/largest text first
-        const heading = el.querySelector('h1,h2,h3,h4,h5,h6,strong,b');
-        const name = heading ? heading.innerText.trim() : fullText.split('\n')[0].substring(0, 100);
-        const priceMatch = fullText.match(/([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?(元|\/月|起|Monthly|每月))/i);
-        
-        items.push({
-          name: name || 'Unknown Product',
-          price: priceMatch ? priceMatch[0] : 'N/A',
-          text: fullText.substring(0, 200),
-          image: el.querySelector('img')?.src || ''
+      const tryCard = (el) => {
+        const text = el.innerText?.replace(/\s+/g, ' ').trim() || '';
+        if (text.length < 10 || text.length > 1000 || seen.has(text)) return;
+        seen.add(text);
+
+        // 必须包含价格信息或明显的商品名
+        const hasPrice = PRICE_RE.test(text);
+        const heading = el.querySelector('h1,h2,h3,h4,h5,h6,strong,b,a[title],.title,.name,.goods-name,.item-title');
+        const name = (heading ? heading.innerText : text.split('\n')[0]).trim().substring(0, 80);
+        const priceMatch = text.match(PRICE_RE);
+
+        if (hasPrice || name.length > 8) {
+          results.push({
+            name: name || '未知',
+            price: priceMatch ? priceMatch[0] : 'N/A',
+            image: (el.querySelector('img[src]') || el.querySelector('img[data-src]'))?.getAttribute('src') || '',
+            url: el.querySelector('a[href]')?.href || location.href,
+          });
+        }
+      };
+
+      CARD_SELECTORS.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          // 跳过太小/太大的容器
+          const rect = el.getBoundingClientRect();
+          if (rect.width < 50 || rect.height < 30) return;
+          tryCard(el);
         });
       });
 
-      return items;
+      return results.slice(0, 30); // 最多返回30条
     });
 
-    return products;
+    return items;
   } catch (error) {
-    console.error(`Error discovering products at ${url}:`, error.message);
+    console.error(`[discoverProducts] Error @ ${url}:`, error.message);
     throw new Error(error.message);
   } finally {
     if (browser) await browser.close();
