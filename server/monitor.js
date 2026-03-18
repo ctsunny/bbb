@@ -2,7 +2,8 @@ const puppeteer = require('puppeteer');
 const db = require('./db');
 const { sendBarkNotification } = require('./notify');
 
-const VERSION = 'v1.3.0';
+const VERSION = 'v1.5.0';
+const MAX_CHANGES_PER_SITE = 20; // 每站点最多保留的历史记录数
 
 // ── Puppeteer 启动参数 ──────────────────────────────────────────
 const LAUNCH_ARGS = [
@@ -127,10 +128,16 @@ const checkSite = async (site) => {
       const isNoise = added.length + removed.length < 2 &&
         added.concat(removed).every(l => /^\d{1,2}[:\-\/]\d{2}/.test(l) || l.length < 8);
 
-    if (!isNoise) {
+      if (!isNoise) {
         const diffSummary = buildSummary(site.name, added, removed);
-        db.prepare('INSERT INTO changes (site_id, diff_summary, full_snapshot) VALUES (?, ?, ?)')
-          .run(site.id, diffSummary, currentContent);
+        db.prepare('INSERT INTO changes (site_id, diff_summary) VALUES (?, ?)')
+          .run(site.id, diffSummary);
+        // 剪枝：每站点只保留最近 MAX_CHANGES_PER_SITE 条
+        db.prepare(
+          `DELETE FROM changes WHERE site_id = ? AND id NOT IN (
+            SELECT id FROM changes WHERE site_id = ? ORDER BY detected_at DESC LIMIT ?
+          )`
+        ).run(site.id, site.id, MAX_CHANGES_PER_SITE);
         await sendBarkNotification(`🔔 ${site.name} 有更新！`, diffSummary, site.url);
       }
     }
@@ -147,11 +154,17 @@ const checkSite = async (site) => {
   }
 };
 
-// ── 批量运行监控 ────────────────────────────────────────────────
+// ── 批量运行监控（按各站点独立间隔决定是否触发）────────────────────
 const runMonitor = async () => {
   const activeSites = db.prepare("SELECT * FROM sites WHERE is_active = 1").all();
+  const now = Date.now();
   for (const site of activeSites) {
     if (site.status === 'checking') continue;
+    // 计算距离上次检查的秒数
+    const lastMs = site.last_checked ? new Date(site.last_checked + 'Z').getTime() : 0;
+    const elapsed = (now - lastMs) / 1000;
+    const interval = Number(site.interval) || 60;
+    if (elapsed < interval) continue; // 未到时间，跳过
     await checkSite(site);
   }
 };

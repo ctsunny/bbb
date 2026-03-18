@@ -7,17 +7,17 @@ const db      = require('./db');
 const { runMonitor, checkSite, discoverProducts } = require('./monitor');
 require('dotenv').config();
 
-const app            = express();
-const PORT           = process.env.PORT || 3001;
-const CHECK_INTERVAL = process.env.CHECK_INTERVAL || '*/1 * * * *';
+const VERSION = 'v1.5.0';
+const app     = express();
+const PORT    = process.env.PORT || 3001;
 
-// ── 初始化或修复数据库配置 ───────────────────────────────────────────────
+// ── 初始化配置 ───────────────────────────────────────────────────────
 const ensureSettings = () => {
   if (!db.prepare('SELECT value FROM settings WHERE key = ?').get('admin_user')) {
-    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('admin_user', 'admin');
-    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('admin_pass', crypto.randomBytes(4).toString('hex'));
-    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('access_path', crypto.randomBytes(8).toString('hex'));
-    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('reg_token',   crypto.randomBytes(16).toString('hex'));
+    db.prepare('INSERT INTO settings (key,value) VALUES (?,?)').run('admin_user', 'admin');
+    db.prepare('INSERT INTO settings (key,value) VALUES (?,?)').run('admin_pass',  crypto.randomBytes(4).toString('hex'));
+    db.prepare('INSERT INTO settings (key,value) VALUES (?,?)').run('access_path', crypto.randomBytes(8).toString('hex'));
+    db.prepare('INSERT INTO settings (key,value) VALUES (?,?)').run('reg_token',   crypto.randomBytes(16).toString('hex'));
   }
 };
 ensureSettings();
@@ -27,25 +27,23 @@ const getSetting = (key) => db.prepare('SELECT value FROM settings WHERE key = ?
 app.use(cors());
 app.use(express.json());
 
-// ── 认证中间件 ────────────────────────────────────────────
+// ── 认证中间件 ────────────────────────────────────────────────────────
 const auth = (req, res, next) => {
-  if (req.headers['authorization'] === getSetting('reg_token')) {
-    next();
-  } else {
-    res.status(401).json({ error: 'Unauthorized' });
-  }
+  const token = req.headers['authorization'] || req.headers['Authorization'];
+  if (token === getSetting('reg_token')) return next();
+  return res.status(401).json({ error: 'Unauthorized' });
 };
 
-// ── API ───────────────────────────────────────────────────
+// ── 登录 ──────────────────────────────────────────────────────────────
 app.post('/api/login', (req, res) => {
   const { user, pass } = req.body;
   if (user === getSetting('admin_user') && pass === getSetting('admin_pass')) {
-    res.json({ token: getSetting('reg_token') });
-  } else {
-    res.status(401).json({ error: '用户名或密码错误' });
+    return res.json({ token: getSetting('reg_token') });
   }
+  res.status(401).json({ error: '用户名或密码错误' });
 });
 
+// ── 配置 ──────────────────────────────────────────────────────────────
 app.get('/api/config', auth, (req, res) => {
   res.json({
     admin_user:  getSetting('admin_user'),
@@ -53,109 +51,131 @@ app.get('/api/config', auth, (req, res) => {
     reg_token:   getSetting('reg_token'),
     access_path: getSetting('access_path'),
     bark_key:    getSetting('bark_key'),
+    version:     VERSION,
   });
 });
 
+// ── 站点列表 ──────────────────────────────────────────────────────────
 app.get('/api/sites', auth, (req, res) => {
-  res.json({ sites: db.prepare('SELECT * FROM sites ORDER BY last_checked DESC').all() });
+  // 返回 UTC 时间带 Z 后缀，前端可正确解析
+  const sites = db.prepare("SELECT *, datetime(last_checked,'utc') as last_checked_utc FROM sites ORDER BY created_at DESC").all()
+    .map(s => ({ ...s, last_checked: s.last_checked_utc ? s.last_checked_utc + 'Z' : null }));
+  res.json({ sites });
 });
 
+// ── 新增站点 ──────────────────────────────────────────────────────────
+app.post('/api/sites', auth, (req, res) => {
+  const { url, name, interval } = req.body;
+  try {
+    const info = db.prepare('INSERT INTO sites (url,name,interval) VALUES (?,?,?)')
+      .run(url, name || url, Number(interval) || 60);
+    res.json({ id: info.lastInsertRowid });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── 更新站点配置（名称/间隔）──────────────────────────────────────────
+app.patch('/api/sites/:id', auth, (req, res) => {
+  const { name, interval } = req.body;
+  try {
+    if (name !== undefined)     db.prepare('UPDATE sites SET name     = ? WHERE id = ?').run(name,            req.params.id);
+    if (interval !== undefined) db.prepare('UPDATE sites SET interval = ? WHERE id = ?').run(Number(interval), req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── 删除站点（先删子记录，防止旧库无CASCADE）────────────────────────
+app.delete('/api/sites/:id', auth, (req, res) => {
+  try {
+    const id = req.params.id;
+    db.prepare('DELETE FROM changes WHERE site_id = ?').run(id);
+    db.prepare('DELETE FROM sites   WHERE id = ?').run(id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── 立即检查 ──────────────────────────────────────────────────────────
+app.post('/api/check-now/:id', auth, async (req, res) => {
+  const site = db.prepare('SELECT * FROM sites WHERE id = ?').get(req.params.id);
+  if (!site)                   return res.status(404).json({ error: 'Not found' });
+  if (site.status==='checking') return res.status(400).json({ error: 'Already checking' });
+  checkSite(site).catch(e => console.error('[check-now]', e.message));
+  res.json({ success: true, message: '检查已触发，请稍后刷新' });
+});
+
+// ── 获取快照 ──────────────────────────────────────────────────────────
+app.get('/api/snapshot/:id', auth, (req, res) => {
+  const site = db.prepare('SELECT name, url, last_content, last_checked FROM sites WHERE id = ?').get(req.params.id);
+  if (!site) return res.status(404).json({ error: 'Not found' });
+  let lines = [];
+  try { lines = JSON.parse(site.last_content || '[]'); } catch(e) {}
+  res.json({ name: site.name, url: site.url, last_checked: site.last_checked, lines });
+});
+
+// ── 变动历史 ──────────────────────────────────────────────────────────
+app.get('/api/changes', auth, (req, res) => {
+  const changes = db.prepare(
+    `SELECT changes.id, changes.site_id, changes.diff_summary,
+            datetime(changes.detected_at,'utc') || 'Z' as detected_at,
+            sites.name as site_name, sites.url as site_url
+     FROM changes JOIN sites ON changes.site_id = sites.id
+     ORDER BY detected_at DESC LIMIT 300`
+  ).all();
+  res.json({ changes });
+});
+
+// ── 清除某站点历史 ────────────────────────────────────────────────────
+app.delete('/api/changes/:siteId', auth, (req, res) => {
+  try {
+    db.prepare('DELETE FROM changes WHERE site_id = ?').run(req.params.siteId);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── 设置 ──────────────────────────────────────────────────────────────
+app.post('/api/settings', auth, (req, res) => {
+  const { bark_key } = req.body;
+  if (bark_key === undefined) return res.status(400).json({ error: 'bark_key required' });
+  db.prepare('INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)').run('bark_key', bark_key);
+  res.json({ success: true });
+});
+
+// ── 商品发现 ──────────────────────────────────────────────────────────
 app.post('/api/discover', auth, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL is required' });
   try {
     const products = await discoverProducts(url);
     res.json({ products });
-  } catch (err) {
+  } catch(err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/sites', auth, (req, res) => {
-  const { url, name, interval } = req.body;
-  try {
-    const info = db.prepare('INSERT INTO sites (url, name, interval) VALUES (?, ?, ?)')
-      .run(url, name || url, interval || 60);
-    res.json({ id: info.lastInsertRowid });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.delete('/api/sites/:id', auth, (req, res) => {
-  const id = req.params.id;
-  // Manually delete child records first (old DBs may not have CASCADE)
-  db.prepare('DELETE FROM changes WHERE site_id = ?').run(id);
-  db.prepare('DELETE FROM sites WHERE id = ?').run(id);
-  res.json({ success: true });
-});
-
-app.post('/api/check-now/:id', auth, async (req, res) => {
-  const site = db.prepare('SELECT * FROM sites WHERE id = ?').get(req.params.id);
-  if (!site) return res.status(404).json({ error: 'Not found' });
-  if (site.status === 'checking') return res.status(400).json({ error: 'Busy' });
-  await checkSite(site);
-  res.json({ success: true });
-});
-
-app.get('/api/changes', auth, (req, res) => {
-  res.json({
-    changes: db.prepare(
-      `SELECT changes.*, sites.name as site_name, sites.url as site_url
-       FROM changes JOIN sites ON changes.site_id = sites.id
-       ORDER BY detected_at DESC LIMIT 200`
-    ).all()
-  });
-});
-
-// Clear all changes for a specific site
-app.delete('/api/changes/:siteId', auth, (req, res) => {
-  db.prepare('DELETE FROM changes WHERE site_id = ?').run(req.params.siteId);
-  res.json({ success: true });
-});
-
-app.post('/api/settings', auth, (req, res) => {
-  const { bark_key } = req.body;
-  if (bark_key !== undefined) {
-    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('bark_key', bark_key);
-    res.json({ success: true });
-  } else {
-    res.status(400).json({ error: 'bark_key required' });
-  }
-});
-
-// ── 动态前端面板路由（带有安全路径防护） ─────────────
+// ── 前端静态文件服务（动态隐藏路径）────────────────────────────────────
 const distPath = path.join(__dirname, '..', 'client', 'dist');
-
 app.use((req, res, next) => {
-  // 让 API 路由正常放行
   if (req.path.startsWith('/api')) return next();
-
-  // 获取数据库中最新的访问路径
   const access = getSetting('access_path');
-  const currentPath = `/console-${access}`;
-
-  // 严格匹配隐藏入口
-  if (req.path === currentPath) {
-    return res.redirect(currentPath + '/');
+  const base   = `/console-${access}`;
+  if (req.path === base)               return res.redirect(base + '/');
+  if (req.path.startsWith(base + '/')) {
+    req.url = req.url.replace(base, '');
+    return express.static(distPath)(req, res, () => res.sendFile(path.join(distPath, 'index.html')));
   }
-
-  if (req.path.startsWith(currentPath + '/')) {
-    // 动态移除前缀，将后续路径交给静态文件服务器解析
-    req.url = req.url.replace(currentPath, ''); 
-    express.static(distPath)(req, res, () => {
-      // 找不到静态文件时，必定返回 index.html（单页应用特性）
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  } else {
-    // 任何错误的路径尝试直接无情拒绝（实现面板隐藏防护）
-    res.status(403).send('<h1>403 Forbidden</h1><p>Access Denied. 面板入口已被隐藏。</p>');
-  }
+  res.status(403).send('<h1>403 Forbidden</h1>');
 });
 
-// ── 定时监控任务 ──────────────────────────────────────────
-cron.schedule(CHECK_INTERVAL, () => runMonitor());
+// ── 定时监控：每分钟检查一次，内部按各站点 interval 决定是否触发 ────
+cron.schedule('* * * * *', () => runMonitor());
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`NanoMonitor v1.4.0 running → http://0.0.0.0:${PORT}`);
+  console.log(`NanoMonitor ${VERSION} → http://0.0.0.0:${PORT}`);
 });
