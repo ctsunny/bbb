@@ -7,7 +7,7 @@ const db      = require('./db');
 const { runMonitor, checkSite, discoverProducts } = require('./monitor');
 require('dotenv').config();
 
-const VERSION = 'v1.5.1';
+const VERSION = 'v1.5.3';
 const app     = express();
 const PORT    = process.env.PORT || 3001;
 
@@ -77,12 +77,13 @@ app.get('/api/config', auth, wrap((req, res) => {
 
 // ── 站点列表 ────────────────────────────────────────────────────────────
 app.get('/api/sites', auth, wrap((req, res) => {
-  const sites = safeAll("SELECT * FROM sites ORDER BY created_at DESC")
+  const sites = safeAll("SELECT * FROM sites ORDER BY id DESC")
     .map(s => ({
       ...s,
       // 确保前端拿到 ISO 格式时间
       last_checked: s.last_checked ? s.last_checked.replace(' ', 'T') + (s.last_checked.endsWith('Z') ? '' : 'Z') : null,
     }));
+  console.log(`[API] sites returned: ${sites.length}`);
   res.json({ sites });
 }));
 
