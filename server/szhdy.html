@@ -1,0 +1,2504 @@
+<html lang="zh-CN"><head>
+        <style>
+
+[class|=coco],[class|=coco]::after,[class|=coco]::before{box-sizing:border-box;outline:0}.coco-msg-progress{width:16px;height:16px}.coco-msg__circle{stroke-width:2;stroke-linecap:square;fill:none;transform:rotate(-90deg);transform-origin:center}.coco-msg-stage:hover .coco-msg__circle{-webkit-animation-play-state:paused!important;animation-play-state:paused!important}.coco-msg__background{stroke-width:2;fill:none}.coco-msg-stage{position:fixed;top:20px;left:50%;width:auto;transform:translate(-50%,0);z-index:3000}.coco-msg-wrapper{position:relative;left:50%;transform:translate(-50%,0);transform:translate3d(-50%,0,0);transition:height .3s ease,padding .3s ease;padding:6px 0;will-change:transform,opacity}.coco-msg{padding:15px 21px;border-radius:3px;position:relative;left:50%;transform:translate(-50%,0);transform:translate3d(-50%,0,0);display:flex;align-items:center}.coco-msg-content,.coco-msg-icon,.coco-msg-wait{display:inline-block}.coco-msg-icon{position:relative;width:20px;height:20px;border-radius:100%;display:flex;justify-content:center;align-items:center}.coco-msg-icon svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18px;height:18px}.coco-msg-wait{width:20px;height:20px;position:relative;fill:#4eb127}.coco-msg-wait svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.coco-msg-close{width:14px;height:14px}.coco-msg-content{margin:0 10px;min-width:110px;text-align:left;font-size:14px;font-weight:500;font-family:-apple-system,Microsoft Yahei,sans-serif;text-shadow:0 0 1px rgba(0,0,0,.01)}.coco-msg.info{color:#0fafad;background-color:#e7fdfc;box-shadow:0 0 2px 0 rgba(0,1,1,.01),0 0 0 1px #c0faf9}.coco-msg.info .coco-msg-icon{background-color:#0fafad}.coco-msg.success{color:#20a53a;background-color:#f2fff4;box-shadow:0 0 2px 0 rgba(0,1,0,.01),0 0 0 1px #d9f8bb}.coco-msg.success .coco-msg-icon{background-color:#20a53a}.coco-msg.warning{color:#f1b306;background-color:#fff9eb;box-shadow:0 0 2px 0 rgba(1,1,0,.01),0 0 0 1px #fcf2cd}.coco-msg.warning .coco-msg-icon{background-color:#f1b306}.coco-msg.error{color:#f34b51;background-color:#fff7f7;box-shadow:0 0 2px 0 rgba(1,0,0,.01),0 0 0 1px #ffe3e3}.coco-msg.error .coco-msg-icon{background-color:#f34b51}.coco-msg.loading{color:#0fafad;background-color:#e7fdfc;box-shadow:0 0 2px 0 rgba(0,1,1,.01),0 0 0 1px #c2faf9}.coco-msg_loading{flex-shrink:0;width:20px;height:20px;position:relative}.coco-msg-circular{-webkit-animation:coco-msg-rotate 2s linear infinite both;animation:coco-msg-rotate 2s linear infinite both;transform-origin:center center;height:18px!important;width:18px!important}.coco-msg-path{stroke-dasharray:1,200;stroke-dashoffset:0;stroke:#0fafad;-webkit-animation:coco-msg-dash 1.5s ease-in-out infinite;animation:coco-msg-dash 1.5s ease-in-out infinite;stroke-linecap:round}@-webkit-keyframes coco-msg-rotate{100%{transform:translate(-50%,-50%) rotate(360deg)}}@keyframes coco-msg-rotate{100%{transform:translate(-50%,-50%) rotate(360deg)}}@-webkit-keyframes coco-msg-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:89,200;stroke-dashoffset:-35px}100%{stroke-dasharray:89,200;stroke-dashoffset:-124px}}@keyframes coco-msg-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:89,200;stroke-dashoffset:-35px}100%{stroke-dasharray:89,200;stroke-dashoffset:-124px}}.coco-msg.info .coco-msg-wait{fill:#0fafad}.coco-msg.success .coco-msg-wait{fill:#20a53a}.coco-msg.warning .coco-msg-wait{fill:#f1b306}.coco-msg.error .coco-msg-wait{fill:#f34b51}.coco-msg.loading .coco-msg-wait{fill:#0fafad}.coco-msg-pointer{cursor:pointer}@-webkit-keyframes coco-msg_info{0%{stroke:#0fafad}to{stroke:#0fafad;stroke-dasharray:0 100}}@keyframes coco-msg_info{0%{stroke:#0fafad}to{stroke:#0fafad;stroke-dasharray:0 100}}@-webkit-keyframes coco-msg_success{0%{stroke:#4eb127}to{stroke:#4eb127;stroke-dasharray:0 100}}@keyframes coco-msg_success{0%{stroke:#4eb127}to{stroke:#4eb127;stroke-dasharray:0 100}}@-webkit-keyframes coco-msg_warning{0%{stroke:#fcbc0b}to{stroke:#fcbc0b;stroke-dasharray:0 100}}@keyframes coco-msg_warning{0%{stroke:#fcbc0b}to{stroke:#fcbc0b;stroke-dasharray:0 100}}@-webkit-keyframes coco-msg_error{0%{stroke:#eb262d}to{stroke:#eb262d;stroke-dasharray:0 100}}@keyframes coco-msg_error{0%{stroke:#eb262d}to{stroke:#eb262d;stroke-dasharray:0 100}}.coco-msg-fade-in{-webkit-animation:coco-msg-fade .2s ease-out both;animation:coco-msg-fade .2s ease-out both}.coco-msg-fade-out{animation:coco-msg-fade .3s linear reverse both}@-webkit-keyframes coco-msg-fade{0%{opacity:0;transform:translate(-50%,0);transform:translate3d(-50%,-80%,0)}to{opacity:1;transform:translate(-50%,0);transform:translate3d(-50%,0,0)}}@keyframes coco-msg-fade{0%{opacity:0;transform:translate(-50%,0);transform:translate3d(-50%,-80%,0)}to{opacity:1;transform:translate(-50%,0);transform:translate3d(-50%,0,0)}}
+        </style><meta charset="UTF-8">
+    <link rel="icon" href="/themes/web/www/upload/local68dd3c919a863.png" type="image/x-icon">
+    <title>狐蒂云计算平台</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link rel="dns-prefetch" href="https://www.szhdy.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="applicable-device" content="pc,mobile">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta name="path" content="https://www.szhdy.com/themes/web/www">
+    <meta property="og:title" content="狐蒂云计算平台">
+    <meta property="og:keywords" content="">
+    <meta property="og:description" content="">
+    <meta property="is:client" content="pc">
+    <meta property="is:home" content="">
+    <meta property="viewPath" content="activities/default">
+    <meta property="statement" content="已申请软著，盗版必究！">
+    <link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/typo.css?v4.0.28">
+<link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/universalComponents.css?v4.0.28">
+<link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/swiper-bundle.min.css?v4.0.28">
+<!-- CSS  全局-->
+<link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/global.css?v4.0.28">
+<link rel="stylesheet" type="text/css" href="//at.alicdn.com/t/c/font_4334155_zodnrrjlblp.css">
+<link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/nav.css?v4.0.28">
+<link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/footer.css?v4.0.28">
+<!-- CSS  Test-->
+<link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/module.css?v4.0.28">
+
+<!-- SCRIPT  v4.0.28-->
+<script src="/themes/web/www/static/script/jquery.min.js?v4.0.28"></script>
+<script src="/themes/web/www/static/script/swiper-bundle.min.js?v4.0.28"></script>
+<!--//数字动画 <h2 class="slowNumber">100,42</h2>-->
+<script src="/themes/web/www/static/script/slowNumber.js?v4.0.28"></script>
+<!--//图片查看器-->
+<script src="/themes/web/www/static/script/lightgallery-all.min.js?v4.0.28"></script>
+<link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/lightgallery.css?v4.0.28">
+
+<!--//tooltip提示-->
+<script src="/themes/web/www/static/script/jTippy.min.js?v4.0.28"></script>
+
+<!--//Alert消息提示和复制-->
+<script src="/themes/web/www/static/script/clipboard.min.js?v4.0.28"></script>
+<script src="/themes/web/www/static/script/coco-message.js?v4.0.28"></script>
+
+<!--//弹窗提示-->
+<link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/layer-animate.css?v4.0.28">
+<script src="/themes/web/www/static/script/method.js?v4.0.28"></script>
+
+<link rel="stylesheet" type="text/css" href="/themes/web/www/default/html/globalCSS.css?v4.0.28">
+<link rel="stylesheet" type="text/css" href="/themes/web/www/default/html/wwwCSS.css?v4.0.28">
+
+<!-- 挂载 CSS全局 文件 -->
+<style>:root{--fontsthickness:antialiased; --BodyBackground:#fff; --txtcl:#181818; --buttoncolor:#0052d9; --colorv:#0052d9; --maxwidth:1440px; --minwidth:745px; --padding:64px; --radius:10px; --PcLogo:33px; --MobileLogo:28px; --logocolorv:transparent; --fonts:14px code, Microsoft YaHei, sans-serif; --waplogo:/themes/web/www/upload/local68dd3a2c72c1c.png; --logo:/themes/web/www/upload/local68dd3a2c72c1c.png; --whitelogo:/themes/web/www/upload/local68dd3a2c72c1c.png; --logocolorvpadding:0; --darker1:#002ab1; --darker2:#003ec5; --Original:#0052d9; --lighter1:#1466ed; --lighter2:#287aff; --lighter3:#3c8eff; --lighter4:#50a2ff; --lighter5:#64b6ff; --gradient2:linear-gradient(180deg,#0052d9, #002ab1); --gradient1:linear-gradient(180deg,#0052d9, #1466ed); --gradient3:linear-gradient(180deg, #1466ed 0%, #0052d9 64%, #002ab1 100%); --gradient4:linear-gradient(180deg, #287aff 0%, #0052d9 64%, #003ec5 100%); --headColor:rgba(255, 255, 255, 1); --translucentdegree:12px; --navheight:62px; --navfontSize:14px; --navfontWeight:500; --navfontWeight_r:500; --navmodeheight:42px; --navleft_height:268px; --navleft_color:#F7F9FD; --navleft_banner:url('/themes/web/www/static/picture/remoteL17017764609130.png'); --navright_color:#fff; --navright_block:rgba(240, 244, 255, 0.24); --nav_classRow:230px; --nav_register:rgba(0, 86, 255, 1); --nav_registerHover:#FFC107; --wapnavheight:62px; --wapnavColor:transparent; --wapnavleft_height:138px; --wapnavleft_color:#f4f8ff; --wapnavright_color:#fff; --footer_filter:none; --banner_height:420px; --banner_background:url('../banner/local65ab5f44a43e2.png'); }</style></head>
+<body class="inherit">
+<section class="nav-layoutcontainer black">
+    <div class="horizontal-menu-navbar ">
+        <div class="horizontal-menu-navbar-logo">
+            <a href="/">
+                <img src="/themes/web/www/upload/local68dd3a2c72c1c.png" alt="狐蒂云计算平台" srcset="" class="horizontal-logosize">
+            </a>
+        </div>
+        <div class="headerBg notransparent translucent"></div>
+        <div class="horizontal-menu-navbar-container">
+            <div class="horizontal-container-navbar">
+                <div class="menu-container-left">
+                    <div class="horizontal-menu-navbar-scroll-btn horizontal-menu-scroll-left" style="display: none;">
+                        <i class="universal icon-arrow-11"></i>
+                    </div>
+                </div>
+                <div class="horizontal-menu-navbar-menu-container">
+                    <ul class="horizontal-menu-navbar-menu ">
+                                                
+                        <li>
+                            <a href="/newestactivity.html" data-key="0" data-childtype="url">
+                            最新活动                            <span class="navbar-menu-tag">
+                                <i style="background-color:">HOT</i></span>
+                                                        </a>
+                        </li>
+                                                
+                        <li>
+                            <a href="https://py.szhdy.com/" data-key="1" data-childtype="url">
+                            主机交易市场                            <span class="navbar-menu-tag">
+                                <i style="background-color:#FF0000">热闹</i></span>
+                                                        </a>
+                        </li>
+                                                
+                        <li>
+                            <a class="nav-arrow" data-key="2" data-childtype="groups">
+                            产品与服务                            </a>
+                        </li>
+                                                
+                        <li>
+                            <a class="nav-arrow" data-key="3" data-childtype="nav">
+                            支持与服务                            </a>
+                        </li>
+                                                
+                        <li>
+                            <a class="nav-arrow" data-key="4" data-childtype="nav">
+                            了解我们                            </a>
+                        </li>
+                        
+                    </ul>
+                    <span class="underline"></span>
+                </div>
+                <div class="menu-container-right">
+                    <div class="horizontal-menu-navbar-scroll-btn horizontal-menu-scroll-right" style="display: block;">
+                        <i class="universal icon-arrow-11"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="horizontal-menu-navbar-search">
+            <div class="horizontal-menu-right-container">
+                                <div class="input-inner-wrapper">
+                    <label class="input-label">
+                        <input type="text" placeholder="云服务器" class="search-input">
+                        <span class="input-suffix">
+                        <i class="search-icon develop sk-sousuo1"></i>
+                    </span>
+                    </label>
+                    <div class="nav-search">
+                        <div class="nav-search-body">
+                            <div class="nav-search-close">
+                                <img alt="关闭" class="close-icon" src="/themes/web/www/static/picture/remoteL17054789546267.svg">
+                            </div>
+                            <ul class="nav-search-tabs">
+                                <li class="nav-search-tab active" data-target="all">全部产品
+                                </li>
+                                <li class="nav-search-tab" data-target="news">
+                                    新闻资讯
+                                </li>
+                                <li class="nav-search-tab" data-target="docs">
+                                    帮助文档
+                                </li>
+                            </ul>
+                            <div class="nav-search-input-wrapper">
+                                <input type="text" placeholder="云服务器" class="nav-search-input">
+                                <span class="nav-search-input-suffix">
+                             <i class="search-icon develop sk-sousuo1"></i>
+                         </span>
+                            </div>
+                            <div class="nav-search-hotProducts">
+                                <p class="nav-search-hotProducts-title">
+                                    热销推荐</p>
+                                <i class="nav-search-hotProducts-icon develop sk-gonggong-xinwenbiaoqian1"></i>
+                            </div>
+                            <div class="nav-search-recommendation">
+                                                            </div>
+                        </div>
+                    </div>
+                </div>
+                                <div class="navbar-public">
+                    <a href="/help.html">文档中心</a>
+                </div>
+                <div class="delimiter"></div>
+                                <div class="navbar-public">
+                    <a href="/clientarea">控制台</a>
+                </div>
+                <div class="delimiter"></div>
+                                <div class="navbar-Register">
+                    <a href="/login">登录</a>
+                </div>
+                <a class="navbar-Login" href="/register">
+                    免费注册
+                </a>
+                                <!-- 已登录-->
+                            </div>
+        </div>
+    </div>
+    <div class="menu-dropdown-container" style="display: none;"></div>
+</section>
+<section class="nav-data" style="display:none;height:0;width: 0;">
+                <div data-key="2" data-childtype="groups">
+                <div class="Submenu-background black">
+    <div class="comp_containerw1680p0 comp_container_auto CloseButtonMount">
+        <div class="Submenu-container product_services">
+            <div class="Submenu-left">
+                <div class="Submenu-left-container">
+                    <div class="Submenu-menuInfo">
+                        <h1 class="Submenu-menuInfo-title">产品与服务</h1>
+                        <div class="Submenu-product-tab">
+                            <ul class="Submenu-product-list">
+                                                                <li class="Submenu-product-name" data-identification="product">
+                                    <a>中国内地云服务器 ECS</a>
+                                </li>
+                                                                <li class="Submenu-product-name" data-identification="product">
+                                    <a>中国香港云服务器 ECS</a>
+                                </li>
+                                                                <li class="Submenu-product-name" data-identification="product">
+                                    <a>境外国外云服务器 ECS</a>
+                                </li>
+                                                                <li class="Submenu-product-name" data-identification="product">
+                                    <a>中国内地物理机/宿主机 DDH</a>
+                                </li>
+                                                                <li class="Submenu-product-name" data-identification="product">
+                                    <a>境外海外物理机/宿主机 DDH</a>
+                                </li>
+                                                                <li class="Submenu-product-name" data-identification="product">
+                                    <a>平台会员制度 / 代理业务</a>
+                                </li>
+                                                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="Submenu-middle-right">
+                <div class="Submenu-right-search">
+                    <div class="Submenu-middle-search">
+    <div class="Submenu-middle-search-flex">
+        <div class="Submenu-middle-search-box">
+            <div class="Submenu-middle-search-box-left">
+                <i class="Submenu-middle-search-icon develop sk-sousuo1"></i>
+                <input class="Submenu-middle-search-text" placeholder="请输入搜索内容" type="text">
+            </div>
+        </div>
+        <div class="Submenu-middle-search-content">
+            <ul class="search-right-content">
+                                <li>
+                    <a atl="云服务器" class="search-right-content-text" href="">云服务器</a>
+                </li>
+                                <li>
+                    <a atl="CDN" class="search-right-content-text" href="">CDN</a>
+                </li>
+                                <li>
+                    <a atl="物理机" class="search-right-content-text" href="">物理机</a>
+                </li>
+                                <li>
+                    <a atl="虚拟主机" class="search-right-content-text" href="">虚拟主机</a>
+                </li>
+                            </ul>
+        </div>
+    </div>
+</div>
+                </div>
+                <div class="Submenu-right-line">
+                                        <div class="menu-product-content">
+                        <div class="Submenu-middle">
+                                                        <div class="Submenu-middle-product">
+                                <div class="Submenu-product-content-list">
+                                                                        <a href="/cart?fid=2&amp;gid=115" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">湖北·十堰高防·4区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7302）+DDR4 nvme企业服务器硬盘，自动过白，100GDDOS高防，金盾+傲盾抗CC，国家级骨干线电信网络优化，Raid5阵列硬盘数据保护！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=125" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">湖北·襄阳高防·5区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">单IP200G独立防御+金盾+傲盾+TT盾多重过滤CC攻击</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=126" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">湖北·丹江口高防·6区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">单IP200G独立防御--多层傲盾集群过滤CC攻击</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=140" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">湖北·襄阳高防·7区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">单IP200G独立防御+金盾+傲盾+TT盾多重过滤CC攻击</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=167" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">湖北·襄阳高防·8区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">单IP200G独立防御+金盾+傲盾+TT盾多重过滤CC攻击</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=139" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波电信·6区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">50G独立防御精品线路+傲盾集群+TT盾多重过滤CC攻击</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=143" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波电信·7区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">高性能铂金8272cl处理器 高性能U.2服务级硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=147" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波电信·8区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7k62）+DDR4 U.2高效硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=153" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波电信·9区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">i9-14900K  顶级服务器级别处理器，高达6GHz高性能频率，搭配DDR5高性能内存，采用英特尔U.2高性能企业级硬盘，无论面对游戏、网站均可强劲带动，100G.DDOS企业级防护，给你服务器带来强悍防护，超高宽满足大面积需求（10G光模块接入稳定丝滑）</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=165" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波电信·10区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD Ryzen 9 9950X（4.3GHz-5.7GHz）顶级服务器级别处理器，高达5.7GHz高性能频率，搭配DDR5高性能内存，采用英特尔U.2高性能企业级硬盘，无论面对游戏、网站均可强劲带动，100G.DDOS企业级防护，给你服务器带来强悍防护，超高宽满足大面积需求（10G光模块接入稳定丝滑）</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=172" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波BGP·11区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">高性能铂金8272cl处理器 高性能U.2服务级硬盘 省内骨干线BGP 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=181" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波电信·12区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">E5-2673 v4处理器 高性能U.2服务级硬盘 省内骨干线电信 100G.DDOS企业级防护 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=201" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波电信·13区</span>
+                                                                                                <span class="list-product-hot">最新</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">高性能铂金8259CL处理器 高性能U.2服务级硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=161" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">广东·深圳电信 2区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">高性能铂金8269CY处理器 高性能U.2服务级硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=196" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">广东·深圳电信 3区</span>
+                                                                                                <span class="list-product-hot">最新</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">高性能铂金8170M处理器 高性能U.2服务级硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=182" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">广东·佛山电信 1区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">金牌 6152 高性能U.2服务级硬盘 骨干线电信线路 100G.DDOS企业级防护，给你服务器带来强悍防护</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=183" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">广东·佛山电信 2区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">高性能铂金8269cl处理器 高性能U.2服务级硬盘 骨干线电信线路 100G.DDOS企业级防护，给你服务器带来强悍防护</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=144" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">云南·昆明电信1区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2680V4+DDR4 SSD高效硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=169" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">腾讯·广州BGP·1区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">腾讯云广州机房，超强稳定，三网BGP线路优化，U.2高性能硬盘给你带来最佳的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=160" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">腾讯·广州BGP·2区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">腾讯云上海机房，超强稳定，三网BGP线路优化，SSD高性能硬盘给你带来最佳的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=194" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">腾讯·广州BGP·3区</span>
+                                                                                                <span class="list-product-hot">最新</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">腾讯云上海机房，超强稳定，三网BGP线路优化，SSD高性能硬盘给你带来最佳的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=162" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">陕西·西安电信1区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2673 v4+DDR4 U.2高效硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=155" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">陕西·西安电信2区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2673 v4+DDR4 U.2高效硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=170" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">陕西·西安电信4区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">高性能铂金 8171M处理器 企业级机械阵列硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=116" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">陕西·西安电信5区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">英特尔® 至强® E5-2680 v4+DDR4+U.2高性能硬件，自动过白，100GDDOS高防，金盾+傲盾抗CC，国家级骨干线电信网络优化！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=198" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">陕西·西安电信8区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2673 v4+DDR4 U.2高效硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=189" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">陕西·西安电信9区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2673 v4+DDR4 U.2高效硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=179" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">内蒙古·呼和浩特·1区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2697 v4+DDR4 U.2高效硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=180" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">内蒙古·呼和浩特·2区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2697 v4+DDR4 U.2高效硬盘 省内骨干线电信 给你带优质的体验</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=66" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">优刻·北京电信·1区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">英特尔® 至强® 金牌 6146+DDR4+SSD高性能硬件，自动过白，国家级骨干线电信网络优化，Raid0阵列硬盘数据保护！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=2&amp;gid=193" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">优刻·北京BGP·3区</span>
+                                                                                                <span class="list-product-hot">最新</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">金牌6152处理器 SSD企业级固态硬盘 采用UCloud优得云BGP优化线路</div>
+                                        </div>
+                                    </a>
+                                                                    </div>
+                            </div>
+                                                        <div class="Submenu-middle-product">
+                                <div class="Submenu-product-content-list">
+                                                                        <a href="/cart?fid=19&amp;gid=21" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 1区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7k62）+DDR4 U.2高效硬盘 香港大埔数据中心CN2网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=58" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 2区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7302）+DDR4 三星PM 1735 高效硬盘 香港大埔数据中心CN2网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=65" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 3区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">英特尔® 至强® Gold 6133处理器+DDR4+U2，一手货源。香港大埔数据中心CN2+CTG网络优化，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=73" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 4区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2680V4+DDR4+U2，一手货源。香港大埔数据中心CN2+CTG网络优化，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=80" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 5区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2696V4+DDR4+U2，一手货源。香港大埔数据中心CN2+CTG网络优化，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=91" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港安畅 6区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">英特尔® 至强® Platinum 8255C处理器+DDR4+SATA+阵列5。香港安畅数据中心CN2网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=100" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 7区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2696V4+DDR4+U2，一手货源。香港大埔数据中心CN2+CTG网络优化，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=106" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 8区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">英特尔® 至强® Platinum 8255C处理器+DDR4+SATA+阵列10。香港安畅数据中心CN2网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=107" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 9区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2697V4+DDR4+U.2高性能硬件，一手货源。香港大埔数据中心优化带宽网络优化，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=117" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 10区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2696V4+DDR4+U2，一手货源。香港大埔数据中心CN2+CTG网络优化，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=120" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 11区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">英特尔® 至强® Platinum 8255C处理器+DDR4 三星PM 1735 高效硬盘 香港大埔数据中心CN2网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=121" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 12区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7402）+DDR4 三星PM 1735 高效硬盘 香港大埔数据中心CN2网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=128" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 13区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">英特尔® 至强® Platinum 8255C处理器+DDR4 U.2高效硬盘 香港双向回程CN2 GIA网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=132" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 15区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2696V4+DDR4+U2，一手货源。香港大埔数据中心CN2+CTG网络优化，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=135" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 16区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2696V4+DDR4+U2，一手货源。香港大埔数据中心CN2+CTG网络优化，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=138" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 17区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">2699V4+DDR4 U.2高效硬盘 香港大埔数据中心CN2网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=163" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 18区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7k62）+DDR4 U.2高效硬盘 香港大埔数据中心CN2网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=145" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 19区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7k62）+DDR4 U.2高效硬盘 香港大埔数据中心CN2网络，延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=206" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 22区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc"></div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=154" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港直连 34区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7k62）+DDR4 U.2高效硬盘 延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=168" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 35区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7k62）+DDR4 U.2高效硬盘 延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=195" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">香港CTG 50区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7k62）+DDR4 U.2高效硬盘 延迟优秀，免备案！</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=19&amp;gid=202" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">中国台湾 68区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">铂金8163处理器 NVMe高速硬盘 国际线路（回国不保证）非常适合需求国际业务用户</div>
+                                        </div>
+                                    </a>
+                                                                    </div>
+                            </div>
+                                                        <div class="Submenu-middle-product">
+                                <div class="Submenu-product-content-list">
+                                                                        <a href="/cart?fid=23&amp;gid=118" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">美国2区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">高性能2696/99V4处理器 U.2高速级硬盘 采用CN2+9929+CMNI2线路 20G基础防御</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=156" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">美国9区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">该线路不适合需求稳定性用户，该线路波动比较大，如果无法接受请勿购买，不支持长期占用宽带，配有智能宽带限制。</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=186" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">美国25区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">该线路不适合需求稳定性用户，该线路波动比较大，如果无法接受请勿购买</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=187" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">美国26区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">三网CN2精品网络 AMD7532强劲处理器 U.2固态硬盘为您的项目带来稳定无忧</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=188" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">美国28区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">高性能2696V4处理器 U.2高速级硬盘 采用CN2+9929+CMNI2线路 20G基础防御</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=199" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">美国35区-Linux专区</span>
+                                                                                                <span class="list-product-hot">最新</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">CN2+9929线路精品网络 500G高防傲盾防火墙 实测的500G没有打死 AMD7B12强劲处理器 U.2固态硬盘为您的项目带来稳定无忧</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=204" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">日本8区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">BGP精品网络 铂金8163强劲处理器 SSD固态硬盘为您的项目带来稳定无忧</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=190" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">新加坡1区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">金牌6133处理器 SSD企业级固态硬盘 采用电信CN2线路 产品ip为广播ip</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=191" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">越南胡志明1区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">铂金8168处理器 SSD企业级固态硬盘 国际宽带 无国内优化 不保证回国网速 产品ip为广播ip</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=192" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">马来西亚1区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">金牌6133处理器 SSD企业级固态硬盘 采用电信CN2线路 产品ip为广播ip</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=197" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">法兰克福1区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">AMD EPYC（霄龙7k62）NVMe高效硬盘 BGP线路 注意该产品不保证回国网速</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=200" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">伦敦1区-Linux专区</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">金牌6230 GTT伪家宽IP NVMe高效硬盘 BGP线路 注意该产品不保证回国网速</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=23&amp;gid=203" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">首尔1区-Linux专区</span>
+                                                                                                <span class="list-product-hot">最新</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">敬请期待，非性价比活动款同区 国际宽带，无国内优化，不保证回国网速。</div>
+                                        </div>
+                                    </a>
+                                                                    </div>
+                            </div>
+                                                        <div class="Submenu-middle-product">
+                                <div class="Submenu-product-content-list">
+                                                                        <a href="/cart?fid=26&amp;gid=157" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波物理机</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">性能独享、网络独享、100G超高防御、省内骨干线电信</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=26&amp;gid=158" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·宁波宿主机</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">性能独享、网络独享、100G超高防御、省内骨干线电信</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=26&amp;gid=177" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">浙江·台州物理机</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">性能独享、网络独享、100G超高防御、省内骨干线BGP</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=26&amp;gid=174" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">广东·广州物理机</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">性能独享、网络独享、100G超高防御、省内骨干线BGP</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=26&amp;gid=176" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">江苏·镇江物理机</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">性能独享、网络独享、100G超高防御、省内骨干线BGP</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=26&amp;gid=178" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">山东·枣庄物理机</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">性能独享、网络独享、集群800G超高防御、省内骨干线电信</div>
+                                        </div>
+                                    </a>
+                                                                    </div>
+                            </div>
+                                                        <div class="Submenu-middle-product">
+                                <div class="Submenu-product-content-list">
+                                                                        <a href="/cart?fid=27&amp;gid=159" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">中国·香港宿主机</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">性能独享、网络独享</div>
+                                        </div>
+                                    </a>
+                                                                        <a href="/cart?fid=27&amp;gid=173" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">美国·洛杉矶宿主机</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">性能独享、网络独享</div>
+                                        </div>
+                                    </a>
+                                                                    </div>
+                            </div>
+                                                        <div class="Submenu-middle-product">
+                                <div class="Submenu-product-content-list">
+                                                                        <a href="/cart?fid=9&amp;gid=26" class="list-product-content">
+                                        <div class="list-product-text-content">
+                                            <div class="list-product-title">
+                                                                                                <span class="list-product-name">加盟政策</span>
+                                                                                                <span class="list-product-hot">火爆</span>
+                                                
+                                            </div>
+                                            <div class="list-product-desc">预购会员或成为优质会员可享受不同政策优惠！</div>
+                                        </div>
+                                    </a>
+                                                                    </div>
+                            </div>
+                                                    </div>
+                                                <div class="Submenu-right">
+                                                        <div class="Submenu-advertisement">
+        <a class="advertisement-content " href="/activities/default.html?method=activity&amp;id=9">
+    <img alt="福利优惠!用云无忧!" src="/themes/web/www/upload/local67b3b657e6c54.png">
+    <div class="advertisement-position">
+        <div class="advertisement-title">
+            福利优惠!用云无忧!        </div>
+        <div class="advertisement-desc">
+            云服务器新老同享续费同价 开发者及中小企业优选轻量应用服务器        </div>
+    </div>
+    </a>
+    </div>
+                                                    </div>
+                                            </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+            <div data-key="3" data-childtype="nav">
+                <div class="Submenu-background black close">
+    <div class="comp_containerw1680p0 comp_container_auto CloseButtonMount">
+        <div class="Submenu-container">
+                        <div class="Submenu-left">
+                <div class="Submenu-left-container">
+                    <div class="Submenu-menuInfo-container">
+                    <div class="Submenu-menuInfo">
+                        <h1 class="Submenu-menuInfo-title">支持与服务</h1>
+                        <p class="Submenu-desc">我们为您提供全方位的支持与服务，确保您在使用我们的云服务时无忧无虑。</p>
+                    </div>
+                    <div class="Submenu-button" alt="其他信息">
+                                            </div>
+                    </div>
+                    <div class="Submenu-contact" alt="联系信息">
+                                            </div>
+                </div>
+            </div>
+                        <div class="Submenu-middle-right">
+                <div class="Submenu-right-line">
+                    <div class="Submenu-middle">
+                        <div class="Submenu-middle-content">
+                                                        <a href="/contact.html" class="Submenu-item">
+                                <div class="Submenu-item-title">
+                                    <span class="Submenu-title">联系我们</span>
+                                                                    </div>
+                                <span class="Submenu-desc">欢迎随时联系我们，期待与您沟通合作！</span>
+                            </a>
+                                                        <a href="/Assure.html" class="Submenu-item">
+                                <div class="Submenu-item-title">
+                                    <span class="Submenu-title">服务保障</span>
+                                                                    </div>
+                                <span class="Submenu-desc">全方位保障，确保您的服务安全可靠。</span>
+                            </a>
+                                                        <a href="/help.html" class="Submenu-item">
+                                <div class="Submenu-item-title">
+                                    <span class="Submenu-title">帮助文档</span>
+                                                                    </div>
+                                <span class="Submenu-desc">解答疑问，提供详细的使用指南和常见问题解答</span>
+                            </a>
+                                                        <a href="/newscontent/1.html" class="Submenu-item">
+                                <div class="Submenu-item-title">
+                                    <span class="Submenu-title">服务条款</span>
+                                                                    </div>
+                                <span class="Submenu-desc">查看我们的服务条款，了解我们的服务范围和使用规则。</span>
+                            </a>
+                                                        <a href="/downloads" class="Submenu-item">
+                                <div class="Submenu-item-title">
+                                    <span class="Submenu-title">下载中心</span>
+                                                                    </div>
+                                <span class="Submenu-desc">获取各类文件下载，便捷高速，满足您的需求。</span>
+                            </a>
+                                                        <a href="/bt.html" class="Submenu-item">
+                                <div class="Submenu-item-title">
+                                    <span class="Submenu-title">宝塔面板</span>
+                                                                    </div>
+                                <span class="Submenu-desc">提供全面的宝塔面板安装及挂载脚本</span>
+                            </a>
+                                                                                </div>
+                    </div>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+            <div data-key="4" data-childtype="nav">
+                <div class="Submenu-background black close">
+    <div class="comp_containerw1680p0 comp_container_auto CloseButtonMount">
+        <div class="Submenu-container">
+                        <div class="Submenu-left">
+                <div class="Submenu-left-container">
+                    <div class="Submenu-menuInfo-container">
+                    <div class="Submenu-menuInfo">
+                        <h1 class="Submenu-menuInfo-title">了解我们</h1>
+                        <p class="Submenu-desc">10+年商誉沉淀，深耕中国香港及海外高端资源</p>
+                    </div>
+                    <div class="Submenu-button" alt="其他信息">
+                                            </div>
+                    </div>
+                    <div class="Submenu-contact" alt="联系信息">
+                                            </div>
+                </div>
+            </div>
+                        <div class="Submenu-middle-right">
+                <div class="Submenu-right-line">
+                    <div class="Submenu-middle">
+                        <div class="Submenu-middle-content">
+                                                        <a href="/Introduction.html" class="Submenu-item">
+                                <div class="Submenu-item-title">
+                                    <span class="Submenu-title">公司简介</span>
+                                                                    </div>
+                                <span class="Submenu-desc">发现我们的公司的历史、使命和价值观。</span>
+                            </a>
+                                                        <a href="/news.html" class="Submenu-item">
+                                <div class="Submenu-item-title">
+                                    <span class="Submenu-title">新闻动态</span>
+                                                                    </div>
+                                <span class="Submenu-desc">浏览最新热门新闻和实时资讯，紧跟时事动态。</span>
+                            </a>
+                                                                                </div>
+                    </div>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </section>
+
+
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/themes/web/www/static/css/activities.css?v4.0.28">
+<section class="globalBanner leftSide black">
+    <div class="comp_container comp_container_auto comp_container_100">
+        <div class="pagebanner-relative">
+            <div class="pagebanner center-content">
+                <div class="pagebanner-text ">
+                                        <h1 class="pagebanner-title ">福利优惠!用云无忧!</h1>
+                                        <p class="pagebanner-description">云服务器新老同享续费同价 开发者及中小企业优选轻量应用服务器</p>
+                                        <div class="pagebanner-button">
+                                                <a href="/register" target="_blank" class="Button fancy-button bg-gradient"><span>前往注册抢购</span></a>
+                                                                        <a href="https://www.szhdy.com/qq" target="_blank" class="Button fancy-button bg-gradient"><span>咨询我们</span></a>
+                                                                    </div>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="navigation-slied-body">
+    <div class="pageNavigation">页面导航</div>
+    <div class="navigation-slied">
+                <div class="navigation-slied-item" data-navigation="#navigation_379">
+            性价比专区        </div>
+                <div class="navigation-slied-item" data-navigation="#navigation_3">
+            质量型专区        </div>
+                <div class="navigation-slied-item" data-navigation="#navigation_419">
+            物理区稳定专区        </div>
+            </div>
+</section>
+<main class="et-main activities_bg">
+        <section class="activityContent_bg" id="navigation_379">
+        <div class="comp_container comp_container_auto ">
+            <div class="currency-title">
+                <h2 class="currency-title-a">性价比专区！预算党优选云服务器！</h2>
+                <div class="currency-title-a-content">
+                    续费同价，每个配置全网（包括含其他活动界面）限新购1次。先抢先得，购买前请查看活动规则。                    <a onclick="activityRules('379')" class="cutOneSHair activityRules">活动规则</a>
+                    <i id="rulesContent379" style="display: none;">
+                        <p><span style="color: rgb(224, 62, 45);">活动产品备注不支持退款标题将不支持退款，退货退款前，请先确定是否满足退货说明的条件。</span></p>
+<p><strong><span style="color: rgb(224, 62, 45);">近期发现部分用户通过脚本抢购产品，脚本抢购不可耻，但是一个账号仅限一台，你利用脚本批量抢购，一个账号抢购多台现购机，如巡逻发现，立即封闭账号处理，没收产品，资金不退回。</span></strong></p>
+<p><strong><span style="color: rgb(224, 62, 45);">香港云服务器 代号:C/<a class="productname">美国云服务器 代号:J</a>&nbsp;    为防止市场泛滥，仅限首批香港/<a class="productname">美国各</a>100台可上市场，后续补充库存只允许官网自助转移，不允许上架市场。</span></strong></p>
+<p>活动规则：</p>
+<p>1、同一配置不同地域的资源价格可能会有差异；购买后不支持更换地域，请您谨慎选择。</p>
+<p>2、购买后配置升级和续费可前往产品控制台操作，按官网正常购买流程执行；购买产品到期后，参照官网例价格进行续费；</p>
+<p>3、参与页面任何活动需要注册并实名认证真实信息，包含邮箱、手机号、身份证等个人信息。未达到认证标准的用户，会显示账号有风险；</p>
+<p>4、为保证活动的公平公正，狐蒂云有权对恶意刷抢活动资源、利用资源从事违法违规行为的用户收回云资源；</p>
+<p>5、狐蒂云可以根据运营情况对活动进行变更或调整，包括不限于活动规则、商品价格、商品数量等，请以页面最新内容为准。用户在活动规则变更或调整前已经获得的权益不受影响。</p>
+<p>6、“限时特惠”商品仅限狐蒂云产品（该产品无订单记录或累计订单）购买，同一账号限购1次；同一实名认证主体限购1次，如相同实名认证主体的其他账号已购买过同类产品，则不支持再次购买；</p>
+<p>7、产品一天内无理由原路退回，超过一天，按使用天数扣款原路退回或余额退回，超过7天将不支持退款处理。<span style="color: rgb(224, 62, 45);">退款或自助退款后将不再支持同型号二次购买。</span></p>
+<p>8、产品未标明（独享）均为峰值宽带，均不支持长期占用，具体限速规则，请查看平台官网政策：（平台所有机器智能宽带问题解答），以及（退款协议）第七、八、九条。</p>
+<p>9、当区域出现CPU紧张或者宽带冗余不足导致机器性能差、网络差等属于正常现象，如该区域出现性能瓶颈或卡顿严重，我司会优先针对安装 Windows系统用户进行性能限制，以保证其他Linux用户使用，安装 Windows系统机器用户最低限制机器性能20%，如果您发现您机器被限性能属于正常现象，后续如果更换Linux请及时提交工单，解除性能限制。</p>
+<p>10、线路为机房说明，一般默认去程线路，回程线路以实际体验为准，不保证一官网标明线路去程一致。</p>
+<p>11、会员或加盟用户不支持原路退回处理，仅支持余额退回。</p>                    </i>
+                                    </div>
+            </div>
+            <div class="activity-row">
+                                <div class="cat-styleC-promotion-card" data-id="417">
+    <div class="cat-styleC-head">
+        <div class="cat-styleCpromotion">
+            <div class="cat-styleCtitle">
+                <h1>美国云服务器 代号:J 第2批等待通知</h1>
+                                <span class="titleTags">个/企认证</span>
+                            </div>
+            <div class="cat-styleCdesc">
+                <p>性价比款不支持退款请求！</p>
+            </div>
+        </div>
+        <div class="cat-styleC-head-right  ">
+            <div class="main-price">
+                <div class="price-current-desc">
+                        <span class="main-price-discount" id="discount">
+                        0.3折</span>
+                    <span class="main-price-old" id="old" data-old="5400.00">
+                        5400.00</span>
+                </div>
+                <div class="main-price-content">
+                <span class="main-price-current" id="current" data-current="138.00">
+                    138.00                </span>
+                    <span class="price-current-unit">
+                        元/续费同价                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cat-styleC-main">
+        <div class="activityitem-cat-styleCform">
+            <div class="cat-styleCform-container">
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>核心：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="fOuPswmG">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            16H 英特尔® 至强® E5 2698v4</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>内存：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="hO44b1hk">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            16G 高速DDR4</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>系统盘：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="lxwItz36">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            50G SSD高性能硬盘</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>带宽：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="CeI8Z61z">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            50Mbps峰值 电信联通9929-移动CMIN2线路</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>系统支持：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="8F3bjlAG">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            仅支持Linux系统安装</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>时长:</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="L2gfebME">
+                                                <!-- 2下拉类型 -->
+                        <!-- 3购买时长 -->
+                        <div class="act-dropdown">
+    <div class="act-dropdown-selected">
+            3年        </div>
+    <div class="act-dropdown-options">
+                <div class="act-dropdown-option selected" data-used="1" data-new="1" data-type="3">
+            3年        </div>
+            </div>
+</div>
+
+
+                                            </div>
+                </div>
+                            </div>
+        </div>
+        <div class="cat-styleCform-footer " style="--remainingPercentage:%">
+            <div class="cat-styleC-head-tag">
+                                <span class="head-tag-item active">超性价比</span>
+                                                            </div>
+            <a class="form-footer-butt cutOneSHair disableButton" onclick="activityError('活动提醒',
+               '该商品已售罄，请关注其他商品或活动！','','关闭')">
+            商品已售罄            </a>
+        </div>
+    </div>
+
+</div>
+
+
+                                                <div class="cat-styleC-promotion-card" data-id="382">
+    <div class="cat-styleC-head">
+        <div class="cat-styleCpromotion">
+            <div class="cat-styleCtitle">
+                <h1>香港云服务器 代号:C 第2批等待通知</h1>
+                                <span class="titleTags">个/企认证</span>
+                            </div>
+            <div class="cat-styleCdesc">
+                <p>性价比款不支持退款请求！预计下午开通，最晚晚上。</p>
+            </div>
+        </div>
+        <div class="cat-styleC-head-right  ">
+            <div class="main-price">
+                <div class="price-current-desc">
+                        <span class="main-price-discount" id="discount">
+                        0.3折</span>
+                    <span class="main-price-old" id="old" data-old="5400.00">
+                        5400.00</span>
+                </div>
+                <div class="main-price-content">
+                <span class="main-price-current" id="current" data-current="138.00">
+                    138.00                </span>
+                    <span class="price-current-unit">
+                        元/续费同价                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cat-styleC-main">
+        <div class="activityitem-cat-styleCform">
+            <div class="cat-styleCform-container">
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>核心：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="i1Qskq5L">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            16H 英特尔® 至强® 铂金8272CL</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>内存：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="tgCIIPOd">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            16G 高速DDR4</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>系统盘：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="APwSG9bl">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            50G U.2企业级硬盘</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>带宽：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="cmLsICR0">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            20Mbps峰值 CTG优化线路</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>系统支持：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="b7vBKtc6">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            仅支持Linux系统安装</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>时长:</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="a9UuqPT6">
+                                                <!-- 2下拉类型 -->
+                        <!-- 3购买时长 -->
+                        <div class="act-dropdown">
+    <div class="act-dropdown-selected">
+            3年        </div>
+    <div class="act-dropdown-options">
+                <div class="act-dropdown-option selected" data-used="1" data-new="1" data-type="3">
+            3年        </div>
+            </div>
+</div>
+
+
+                                            </div>
+                </div>
+                            </div>
+        </div>
+        <div class="cat-styleCform-footer " style="--remainingPercentage:%">
+            <div class="cat-styleC-head-tag">
+                                <span class="head-tag-item active">超性价比</span>
+                                                            </div>
+            <a class="form-footer-butt cutOneSHair disableButton" onclick="activityError('活动提醒',
+               '该商品已售罄，请关注其他商品或活动！','','关闭')">
+            商品已售罄            </a>
+        </div>
+    </div>
+
+</div>
+
+
+                                            </div>
+        </div>
+    </section>
+        <section class="activityContent_bg" id="navigation_3">
+        <div class="comp_container comp_container_auto ">
+            <div class="currency-title">
+                <h2 class="currency-title-a">质量型专区！预算党又需求稳定用户优选！</h2>
+                <div class="currency-title-a-content">
+                    续费同价，每个配置全网（包括含其他活动界面）限新购1次。先抢先得，购买前请查看活动规则。                    <a onclick="activityRules('3')" class="cutOneSHair activityRules">活动规则</a>
+                    <i id="rulesContent3" style="display: none;">
+                        <p><span style="color: rgb(224, 62, 45);">活动产品备注不支持退款标题将不支持退款，退货退款前，请先确定是否满足退货说明的条件。</span></p>
+<p>活动规则：</p>
+<p>1、同一配置不同地域的资源价格可能会有差异；购买后不支持更换地域，请您谨慎选择。</p>
+<p>2、购买后配置升级和续费可前往产品控制台操作，按官网正常购买流程执行；购买产品到期后，参照官网例价格进行续费；</p>
+<p>3、参与页面任何活动需要注册并实名认证真实信息，包含邮箱、手机号、身份证等个人信息。未达到认证标准的用户，会显示账号有风险；</p>
+<p>4、为保证活动的公平公正，狐蒂云有权对恶意刷抢活动资源、利用资源从事违法违规行为的用户收回云资源；</p>
+<p>5、狐蒂云可以根据运营情况对活动进行变更或调整，包括不限于活动规则、商品价格、商品数量等，请以页面最新内容为准。用户在活动规则变更或调整前已经获得的权益不受影响。</p>
+<p>6、“限时特惠”商品仅限狐蒂云产品（该产品无订单记录或累计订单）购买，同一账号限购1次；同一实名认证主体限购1次，如相同实名认证主体的其他账号已购买过同类产品，则不支持再次购买；</p>
+<p>7、产品一天内无理由原路退回，超过一天，按使用天数扣款原路退回或余额退回，超过7天将不支持退款处理。<strong><span style="color: rgb(224, 62, 45);">退</span><span style="color: rgb(224, 62, 45);">款或自助退款后将不再支持同型号二次购买。</span></strong></p>
+<p><span style="color: rgb(0, 0, 0);">8、产品未标明（独享）均为峰值宽带，均不支持长期占用，具体限速规则，请查看平台官网政策：（平台所有机器智能宽带问题解答），以及（退款协议）第七、八、九条。</span></p>
+<p>9、当区域出现CPU紧张或者宽带冗余不足导致机器性能差、网络差等属于正常现象，<span style="color: rgb(224, 62, 45);"><strong>如该区域出现性能瓶颈或卡顿严重，我司会优先针对安装 Windows系统用户进行性能限制，以保证其他Linux用户使用，安装 Windows系统机器用户最低限制机器性能20%，如果您发现您机器被限性能属于正常现象，后续如果更换Linux请及时提交工单，解除性能限制。</strong></span></p>
+<p>10、线路为机房说明，一般默认去程线路，回程线路以实际体验为准，不保证一官网标明线路去程一致。</p>
+<p>11、会员或加盟用户不支持原路退回处理，仅支持余额退回。</p>                    </i>
+                                    </div>
+            </div>
+            <div class="activity-row">
+                                <div class="cat-styleC-promotion-card" data-id="377">
+    <div class="cat-styleC-head">
+        <div class="cat-styleCpromotion">
+            <div class="cat-styleCtitle">
+                <h1>美国云服务器 代号:B</h1>
+                                <span class="titleTags">个/企认证</span>
+                            </div>
+            <div class="cat-styleCdesc">
+                <p>平均每日1元！支持24小时无理由退款！高质量线路首选!</p>
+            </div>
+        </div>
+        <div class="cat-styleC-head-right  ">
+            <div class="main-price">
+                <div class="price-current-desc">
+                        <span class="main-price-discount" id="discount">
+                        4.3折</span>
+                    <span class="main-price-old" id="old" data-old="840.00">
+                        840.00</span>
+                </div>
+                <div class="main-price-content">
+                <span class="main-price-current" id="current" data-current="360.00">
+                    360.00                </span>
+                    <span class="price-current-unit">
+                        元/续费同价                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cat-styleC-main">
+        <div class="activityitem-cat-styleCform">
+            <div class="cat-styleCform-container">
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>核心：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="LdhOKMl4">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            8H 英特尔® 至强® E5 2696v4</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>内存：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="oHUYIjgH">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            8G 高速DDR4</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>系统盘：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="uxojz1YP">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            50G SSD高性能硬盘</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>带宽：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="zrAxDAAh">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            100Mbps峰值 CN2+9929+CMNI2线路</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>系统支持：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="Zqegols6">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            支持全系统安装</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>时长:</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="bMPxtpMh">
+                                                <!-- 2下拉类型 -->
+                        <!-- 3购买时长 -->
+                        <div class="act-dropdown">
+    <div class="act-dropdown-selected">
+            1年        </div>
+    <div class="act-dropdown-options">
+                <div class="act-dropdown-option selected" data-used="1" data-new="1" data-type="3">
+            1年        </div>
+            </div>
+</div>
+
+
+                                            </div>
+                </div>
+                            </div>
+        </div>
+        <div class="cat-styleCform-footer " style="--remainingPercentage:%">
+            <div class="cat-styleC-head-tag">
+                                <span class="head-tag-item active">高性能 | 稳定无忧</span>
+                                                            </div>
+            <a class="form-footer-butt cutOneSHair disableButton" onclick="activityError('活动提醒',
+               '该商品已售罄，请关注其他商品或活动！','','关闭')">
+            商品已售罄            </a>
+        </div>
+    </div>
+
+</div>
+
+
+                                                <div class="cat-styleC-promotion-card" data-id="7">
+    <div class="cat-styleC-head">
+        <div class="cat-styleCpromotion">
+            <div class="cat-styleCtitle">
+                <h1>香港云服务器 代号:B</h1>
+                                <span class="titleTags">个/企认证</span>
+                            </div>
+            <div class="cat-styleCdesc">
+                <p>平均每日1元！支持24小时无理由退款！高质量线路首选!</p>
+            </div>
+        </div>
+        <div class="cat-styleC-head-right  ">
+            <div class="main-price">
+                <div class="price-current-desc">
+                        <span class="main-price-discount" id="discount">
+                        2.0折</span>
+                    <span class="main-price-old" id="old" data-old="1800.00">
+                        1800.00</span>
+                </div>
+                <div class="main-price-content">
+                <span class="main-price-current" id="current" data-current="360.00">
+                    360.00                </span>
+                    <span class="price-current-unit">
+                        元/续费同价                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cat-styleC-main">
+        <div class="activityitem-cat-styleCform">
+            <div class="cat-styleCform-container">
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>核心：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="7D15JdpZ">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            8H 英特尔® 至强® 铂金8272CL</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>内存：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="9vhFH075">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            8G 高速DDR4</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>系统盘：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="knEWFxSu">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            50G 企业级硬盘</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>带宽：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="bNqz0bHo">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            30Mbps峰值 CTG优化线路</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>系统支持：</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="g5nDw3g1">
+                                                <!-- 1普通文字 -->
+                        <p class="form-text">
+                            支持全系统安装</p>
+                                            </div>
+                </div>
+                                <div class="form-container">
+                                        <div class="form-title">
+                        <h5>时长:</h5>
+                    </div>
+                                        <div class="form-content-data" data-key="w5xN7qWK">
+                                                <!-- 2下拉类型 -->
+                        <!-- 3购买时长 -->
+                        <div class="act-dropdown">
+    <div class="act-dropdown-selected">
+            1年        </div>
+    <div class="act-dropdown-options">
+                <div class="act-dropdown-option selected" data-used="1" data-new="1" data-type="3">
+            1年        </div>
+            </div>
+</div>
+
+
+                                            </div>
+                </div>
+                            </div>
+        </div>
+        <div class="cat-styleCform-footer " style="--remainingPercentage:%">
+            <div class="cat-styleC-head-tag">
+                                <span class="head-tag-item active">高性能 | 稳定无忧</span>
+                                                            </div>
+            <a class="form-footer-butt cutOneSHair " onclick="activityError('活动提醒',
+               '您还未登录，请先登录后再试','/login','前往登录')">
+            立即购买            </a>
+        </div>
+    </div>
+
+</div>
+
+
+                                            </div>
+        </div>
+    </section>
+        <section class="activityContent_bg" id="navigation_419">
+        <div class="comp_container comp_container_auto ">
+            <div class="currency-title">
+                <h2 class="currency-title-a">独享资源物理区 稳定专区！</h2>
+                <div class="currency-title-a-content">
+                    续费同价，每个配置全网（包括含其他活动界面）限新购1次。先抢先得，购买前请查看活动规则。                    <a onclick="activityRules('419')" class="cutOneSHair activityRules">活动规则</a>
+                    <i id="rulesContent419" style="display: none;">
+                        <p><span style="color: rgb(224, 62, 45);">活动产品备注不支持退款标题将不支持退款，退货退款前，请先确定是否满足退货说明的条件。</span></p>
+<p>活动规则：</p>
+<p>1、同一配置不同地域的资源价格可能会有差异；购买后不支持更换地域，请您谨慎选择。</p>
+<p>2、购买后配置升级和续费可前往产品控制台操作，按官网正常购买流程执行；购买产品到期后，参照官网例价格进行续费；</p>
+<p>3、参与页面任何活动需要注册并实名认证真实信息，包含邮箱、手机号、身份证等个人信息。未达到认证标准的用户，会显示账号有风险；</p>
+<p>4、为保证活动的公平公正，狐蒂云有权对恶意刷抢活动资源、利用资源从事违法违规行为的用户收回云资源；</p>
+<p>5、狐蒂云可以根据运营情况对活动进行变更或调整，包括不限于活动规则、商品价格、商品数量等，请以页面最新内容为准。用户在活动规则变更或调整前已经获得的权益不受影响。</p>
+<p>6、“限时特惠”商品仅限狐蒂云产品（该产品无订单记录或累计订单）购买，同一账号限购1次；同一实名认证主体限购1次，如相同实名认证主体的其他账号已购买过同类产品，则不支持再次购买；</p>
+<p>8、枣庄24小时内退款将收取50开机费，其他型号24小时内免费退换，超过一天后非机器问题不可退款。</p>
+<p>12、会员或加盟用户不支持原路退回处理，仅支持余额退回。</p>                    </i>
+                                    </div>
+            </div>
+            <div class="activity-row">
+                                <div class="activity-promotion-card" data-id="420">
+    <div class="card-promotion">
+        <div class="card-title">
+            <h1>枣庄电信高防-A型</h1>
+                        <span class="titleTags">个/企认证</span>
+                    </div>
+        <div class="card-desc">
+            <p>100-800G高强度防护</p>
+        </div>
+    </div>
+    <div class="activityitem-card-form">
+        <div class="card-form-container">
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>核心：</h5>
+                </div>
+                                <div class="form-content-data" data-key="oMGMKNlQ">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        E5-2667 v2*1（8核16线程）</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>内存：</h5>
+                </div>
+                                <div class="form-content-data" data-key="hpL5aMgV">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        128G 高速DDR3</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>硬盘：</h5>
+                </div>
+                                <div class="form-content-data" data-key="IYgSg6tA">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        三星 1T M.2固态硬盘</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>独享带宽：</h5>
+                </div>
+                                <div class="form-content-data" data-key="P0UB0VCG">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        20Mbps 电信线路</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>下行带宽：</h5>
+                </div>
+                                <div class="form-content-data" data-key="OyW0Qyk6">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        G口接入</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>时长:</h5>
+                </div>
+                                <div class="form-content-data" data-key="ILZPKvKB">
+                                        <!-- 2下拉类型 -->
+                    <!-- 3购买时长 -->
+                    <div class="act-dropdown">
+    <div class="act-dropdown-selected">
+            一个月        </div>
+    <div class="act-dropdown-options">
+                <div class="act-dropdown-option selected" data-used="1" data-new="1" data-type="3">
+            一个月        </div>
+            </div>
+</div>
+
+
+                                    </div>
+            </div>
+                    </div>
+        <div class="card-form-footer">
+            <div class="form-footer-head">
+                <div class="head-tag">
+                    <span class="main-price-discount" id="discount">
+                        6.7折</span>
+                                        <span class="head-tag-item active">独享资源</span>
+                                                                            </div>
+
+                <div class="main-price ">
+                <span class="main-price-current" id="current" data-current="200.00">
+                    200.00                </span>
+                    <span class="price-current-unit">
+                        元/续费同价                    </span>
+                    <span class="main-price-old" id="old" data-old="300.00">
+                        300.00</span>
+                </div>
+
+            </div>
+            <a class="form-footer-butt " onclick="activityError('活动提醒',
+               '您还未登录，请先登录后再试','/login','前往登录')">
+            立即购买            </a>
+        </div>
+    </div>
+</div>
+
+
+                                                <div class="activity-promotion-card" data-id="423">
+    <div class="card-promotion">
+        <div class="card-title">
+            <h1>宁波电信高防-A型</h1>
+                        <span class="titleTags">个/企认证</span>
+                    </div>
+        <div class="card-desc">
+            <p>性能独享、网络独享、100G超高防御、省内骨干线电信</p>
+        </div>
+    </div>
+    <div class="activityitem-card-form">
+        <div class="card-form-container">
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>核心：</h5>
+                </div>
+                                <div class="form-content-data" data-key="C4GNFyHZ">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        E5-2640 v4*1（10核20线程）</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>内存：</h5>
+                </div>
+                                <div class="form-content-data" data-key="O1mCXQvf">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        32G 高速DDR4</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>硬盘：</h5>
+                </div>
+                                <div class="form-content-data" data-key="JdbvxuKz">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        240G SSD固态硬盘</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>独享带宽：</h5>
+                </div>
+                                <div class="form-content-data" data-key="M3X9y5ka">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        50Mbps 电信线路</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>下行带宽：</h5>
+                </div>
+                                <div class="form-content-data" data-key="L32l7rLK">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        G口接入</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>时长:</h5>
+                </div>
+                                <div class="form-content-data" data-key="oJ4sZnvP">
+                                        <!-- 2下拉类型 -->
+                    <!-- 3购买时长 -->
+                    <div class="act-dropdown">
+    <div class="act-dropdown-selected">
+            一个月        </div>
+    <div class="act-dropdown-options">
+                <div class="act-dropdown-option selected" data-used="1" data-new="1" data-type="3">
+            一个月        </div>
+            </div>
+</div>
+
+
+                                    </div>
+            </div>
+                    </div>
+        <div class="card-form-footer">
+            <div class="form-footer-head">
+                <div class="head-tag">
+                    <span class="main-price-discount" id="discount">
+                        7.5折</span>
+                                        <span class="head-tag-item active">独享资源</span>
+                                                                            </div>
+
+                <div class="main-price ">
+                <span class="main-price-current" id="current" data-current="300.00">
+                    300.00                </span>
+                    <span class="price-current-unit">
+                        元/续费同价                    </span>
+                    <span class="main-price-old" id="old" data-old="399.00">
+                        399.00</span>
+                </div>
+
+            </div>
+            <a class="form-footer-butt " onclick="activityError('活动提醒',
+               '您还未登录，请先登录后再试','/login','前往登录')">
+            立即购买            </a>
+        </div>
+    </div>
+</div>
+
+
+                                                <div class="activity-promotion-card" data-id="421">
+    <div class="card-promotion">
+        <div class="card-title">
+            <h1>镇江BGP-A型</h1>
+                        <span class="titleTags">个/企认证</span>
+                    </div>
+        <div class="card-desc">
+            <p>100G高强度防护 BGP线路</p>
+        </div>
+    </div>
+    <div class="activityitem-card-form">
+        <div class="card-form-container">
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>核心：</h5>
+                </div>
+                                <div class="form-content-data" data-key="MPJce2Yd">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        E5-2640V4*1（10核20线程）</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>内存：</h5>
+                </div>
+                                <div class="form-content-data" data-key="8h41rEXm">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        32G 高速DDR4</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>硬盘：</h5>
+                </div>
+                                <div class="form-content-data" data-key="KUz0zTx6">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        240G SSD固态硬盘</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>独享带宽：</h5>
+                </div>
+                                <div class="form-content-data" data-key="syLgkHY2">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        50Mbps BGP线路</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>下行带宽：</h5>
+                </div>
+                                <div class="form-content-data" data-key="NWyfRu9i">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        G口接入</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>时长:</h5>
+                </div>
+                                <div class="form-content-data" data-key="kb2X0QKd">
+                                        <!-- 2下拉类型 -->
+                    <!-- 3购买时长 -->
+                    <div class="act-dropdown">
+    <div class="act-dropdown-selected">
+            一个月        </div>
+    <div class="act-dropdown-options">
+                <div class="act-dropdown-option selected" data-used="1" data-new="1" data-type="3">
+            一个月        </div>
+            </div>
+</div>
+
+
+                                    </div>
+            </div>
+                    </div>
+        <div class="card-form-footer">
+            <div class="form-footer-head">
+                <div class="head-tag">
+                    <span class="main-price-discount" id="discount">
+                        7.0折</span>
+                                        <span class="head-tag-item active">独享资源</span>
+                                                                            </div>
+
+                <div class="main-price ">
+                <span class="main-price-current" id="current" data-current="350.00">
+                    350.00                </span>
+                    <span class="price-current-unit">
+                        元/续费同价                    </span>
+                    <span class="main-price-old" id="old" data-old="499.00">
+                        499.00</span>
+                </div>
+
+            </div>
+            <a class="form-footer-butt " onclick="activityError('活动提醒',
+               '您还未登录，请先登录后再试','/login','前往登录')">
+            立即购买            </a>
+        </div>
+    </div>
+</div>
+
+
+                                                <div class="activity-promotion-card" data-id="422">
+    <div class="card-promotion">
+        <div class="card-title">
+            <h1>台州BGP-A型</h1>
+                        <span class="titleTags">个/企认证</span>
+                    </div>
+        <div class="card-desc">
+            <p>性能独享、网络独享、100G超高防御、省内骨干线BGP</p>
+        </div>
+    </div>
+    <div class="activityitem-card-form">
+        <div class="card-form-container">
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>核心：</h5>
+                </div>
+                                <div class="form-content-data" data-key="mGNdHQPG">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        E5-2650V4*2（24核48线程）</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>内存：</h5>
+                </div>
+                                <div class="form-content-data" data-key="PB2u4xFL">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        32G 高速DDR4</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>硬盘：</h5>
+                </div>
+                                <div class="form-content-data" data-key="FL3rl4AY">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        150G SSD固态硬盘</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>独享带宽：</h5>
+                </div>
+                                <div class="form-content-data" data-key="VkPPFZ2k">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        50Mbps BGP线路</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>下行带宽：</h5>
+                </div>
+                                <div class="form-content-data" data-key="CZj42IF2">
+                                        <!-- 1普通文字 -->
+                    <p class="form-text">
+                        G口接入</p>
+                                    </div>
+            </div>
+                        <div class="form-container">
+                                <div class="form-title">
+                    <h5>时长:</h5>
+                </div>
+                                <div class="form-content-data" data-key="vzNnT2CQ">
+                                        <!-- 2下拉类型 -->
+                    <!-- 3购买时长 -->
+                    <div class="act-dropdown">
+    <div class="act-dropdown-selected">
+            一个月        </div>
+    <div class="act-dropdown-options">
+                <div class="act-dropdown-option selected" data-used="1" data-new="1" data-type="3">
+            一个月        </div>
+            </div>
+</div>
+
+
+                                    </div>
+            </div>
+                    </div>
+        <div class="card-form-footer">
+            <div class="form-footer-head">
+                <div class="head-tag">
+                    <span class="main-price-discount" id="discount">
+                        7.8折</span>
+                                        <span class="head-tag-item active">独享资源</span>
+                                                                            </div>
+
+                <div class="main-price ">
+                <span class="main-price-current" id="current" data-current="700.00">
+                    700.00                </span>
+                    <span class="price-current-unit">
+                        元/续费同价                    </span>
+                    <span class="main-price-old" id="old" data-old="899.00">
+                        899.00</span>
+                </div>
+
+            </div>
+            <a class="form-footer-butt " onclick="activityError('活动提醒',
+               '您还未登录，请先登录后再试','/login','前往登录')">
+            立即购买            </a>
+        </div>
+    </div>
+</div>
+
+
+                                            </div>
+        </div>
+    </section>
+        </main>
+<script>
+    $(document).ready(function () {
+        activity.initializeTypeLayout('.cat-styleB-main .act-radio-option, .cat-styleB-main .act-checkbox-option,.cat-styleC-main .act-radio-option, .cat-styleC-main .act-checkbox-option');
+        activity.initializeNavigation();
+        activity.initializePriceCalculation();
+    });
+</script>
+<div class="sky-footer-container footerContainer-h footer_shallow" style="background:rgba(252, 252, 252, 1)">
+    <div class="comp_container comp_container_auto">
+        <div class="sky-footer-top">
+                        <a class="sky-footer-block">
+            <img src="/themes/web/www/static/picture/remoteL16905328288110.svg" class="sky-footer-icon">
+            <div class="sky-footer-title">全天候品质服务</div>
+            </a>
+                        <a class="sky-footer-block">
+            <img src="/themes/web/www/static/picture/remoteL16905328285515.svg" class="sky-footer-icon">
+            <div class="sky-footer-title">极速服务应答</div>
+            </a>
+                        <a class="sky-footer-block">
+            <img src="/themes/web/www/static/picture/remoteL16905328293623.svg" class="sky-footer-icon">
+            <div class="sky-footer-title">客户价值为先</div>
+            </a>
+                        <a class="sky-footer-block">
+            <img src="/themes/web/www/static/picture/remoteL16905328292905.svg" class="sky-footer-icon">
+            <div class="sky-footer-title">全方位安全保障</div>
+            </a>
+                    </div>
+        <div class="sky-footer-main">
+            <div class="sky-footer-left">
+                <div class="sky-footer-left-logo">
+                                        <img src="/themes/web/www/upload/local68dd3a2c72c1c.png" alt="深圳市狐蒂云网络科技有限公司">
+                </div>
+                <div class="sky-footer-companyInformation">
+                                        <div class="sky-footer-address">深圳市狐蒂云网络科技有限公司</div>
+                                        <div class="sky-footer-copy">Copyright © 2022~2026 深圳市狐蒂云网络科技有限公司 版权所有</div>
+                                    </div>
+                                <div class="sky-footer-left-itme">
+                    <p>服务热线：</p>
+                    <a href="tel:添加企业咨询咨询">添加企业咨询咨询</a>
+                </div>
+                                <div class="sky-footer-left-itme">
+                    <p>电子邮箱：</p>
+                    <a href="mailto:szhdy@vip.163.com">szhdy@vip.163.com</a>
+                </div>
+                                <div class="sky-footer-left-itme">
+                    <p>商务QQ：</p>
+                    <a href="http://wpa.qq.com/msgrd?v=3&amp;uin=2088574593&amp;site=qq&amp;menu=yes" target="_blank">2088574593</a>
+                </div>
+                                <div class="sky-footer-left-itme">
+                    <p>公司地址：</p>
+                    <a>深圳市盐田区沙头角街道田心社区沙深路112号沙头角建工大厦412J</a>
+                </div>
+                                <div class="sky-footer-socials">
+                                        <div class="sky-footer-ewm">
+                        <img src="/themes/web/www/upload/local68fe6e94566d1.PNG" alt="商务客服">
+                        <p class="sky-footer-ewm-title">商务客服</p>
+                    </div>
+                                                            <div class="sky-footer-ewm">
+                        <img src="/themes/web/www/upload/local68fe6e38d5511.PNG" alt="官方交流3群">
+                        <p class="sky-footer-ewm-title">官方交流3群</p>
+                    </div>
+                                                            <div class="sky-footer-ewm">
+                        <img src="/themes/web/www/upload/local695ecdc3dc7fa.PNG" alt="官方交流4群">
+                        <p class="sky-footer-ewm-title">官方交流4群</p>
+                    </div>
+                                                            <div class="sky-footer-ewm">
+                        <img src="/themes/web/www/upload/local69a62dfd33c9f.PNG" alt="官方交流5群">
+                        <p class="sky-footer-ewm-title">官方交流5群</p>
+                    </div>
+                                                        </div>
+            </div>
+            <div class="sky-footer-right">
+                <div class="sky-footer-nav-row">
+                                        <div class="sky-footer-nav-column">
+                        <div class="sky-footer-nav-heading">服务指南</div>
+                                                <div class="sky-footer-nav-item">
+                            <a href="/security">安全中心</a>
+                        </div>
+                                                                        <div class="sky-footer-nav-item">
+                            <a href="/verified">实名认证</a>
+                        </div>
+                                                                        <div class="sky-footer-nav-item">
+                            <a href="/invoicelist">API管理</a>
+                        </div>
+                                                                        <div class="sky-footer-nav-item">
+                            <a href="/submitticket">提交工单</a>
+                        </div>
+                                                                        <div class="sky-footer-nav-item">
+                            <a href="/newscontent/1.html">服务条款</a>
+                        </div>
+                                                                    </div>
+                                        <div class="sky-footer-nav-column">
+                        <div class="sky-footer-nav-heading">关于本站</div>
+                                                <div class="sky-footer-nav-item">
+                            <a href="/newscontent/59.html">合作伙伴</a>
+                        </div>
+                                                                        <div class="sky-footer-nav-item">
+                            <a href="/sitemap.xml">站点地图</a>
+                        </div>
+                                                                    </div>
+                                        <div class="sky-footer-nav-column">
+                        <div class="sky-footer-nav-heading">帮助中心</div>
+                                                <div class="sky-footer-nav-item">
+                            <a href="/news.html">行业新闻</a>
+                        </div>
+                                                                        <div class="sky-footer-nav-item">
+                            <a href="/help.html">帮助中心</a>
+                        </div>
+                                                                        <div class="sky-footer-nav-item">
+                            <a href="/downloads">文件下载</a>
+                        </div>
+                                                                    </div>
+                                        <div class="sky-footer-nav-column">
+                        <div class="sky-footer-nav-heading">关于我们</div>
+                                                <div class="sky-footer-nav-item">
+                            <a href="/Introduction.html">公司简介</a>
+                        </div>
+                                                                        <div class="sky-footer-nav-item">
+                            <a href="/contact.html">联系我们</a>
+                        </div>
+                                                                        <div class="sky-footer-nav-item">
+                            <a href="/news.html">公司动态</a>
+                        </div>
+                                                                    </div>
+                                    </div>
+                <div class="sky-footer-bottom">
+                    <div class="sky-footer-links">
+                        <a class="universal icon-diduiqi"></a>
+                                                <a href="https://cdn.szhdy.com" target="_blank">九尾盾CDN（狐蒂云旗下品牌）</a>
+                                                                        <a href="https://www.ip138.com/idc/" target="_blank">idc公司</a>
+                                                                        <a href="https://uapis.cn" target="_blank">UAPI-专业免费API</a>
+                                                                        <a href="https://www.ipip.net/" target="_blank">IP库查询</a>
+                                                                        <a href="https://www.chinaz.com/" target="_blank">站长之家</a>
+                                                                        <a href="https://bbs.btr.cc" target="_blank">博拓瑞论坛</a>
+                                                                    </div>
+                    <div class="sky-footer-info">
+                        <div class="info-copyright">
+                                                        <a class="filing-itme" href="https://gswj.ebs.org.cn/certification?id=1840685928290914305" target="_blank">
+                                                        <img class="filing-icon" src="/themes/web/www/upload/local66fb47ce6b32d.png">
+                                                        <span class="filing-title">深圳市狐蒂云网络科技有限公司(社会统一信用代码: 91440300MAD7W03A2E) </span>
+                            </a>
+                                                        <a class="filing-itme" href="https://beian.miit.gov.cn" target="_blank">
+                                                        <img class="filing-icon" src="/themes/web/www/upload/local66fb535d2538a.png">
+                                                        <span class="filing-title">工信部备案: 粤ICP备2025387186号-1 </span>
+                            </a>
+                                                        <a class="filing-itme" href="https://beian.mps.gov.cn/#/query/webSearch?code=44030802000663" target="_blank">
+                                                        <img class="filing-icon" src="/themes/web/www/static/picture/local657930f11d1cd.png">
+                                                        <span class="filing-title">公安备案：粤公网安备44030802000663号 </span>
+                            </a>
+                                                        <a class="filing-itme" href="https://dxzhgl.miit.gov.cn/dxxzsp/xkz/xkzgl/resource/qiyesearch.jsp?num=%25E6%25B7%25B1%25E5%259C%25B3%25E5%25B8%2582%25E7%258B%2590%25E8%2592%2582%25E4%25BA%2591%25E7%25BD%2591%25E7%25BB%259C%25E7%25A7%2591%25E6%258A%2580%25E6%259C%2589%25E9%2599%2590%25E5%2585%25AC%25E5%258F%25B8&amp;type=xuke" target="_blank">
+                                                        <img class="filing-icon" src="/themes/web/www/upload/local66fb535d2538a.png">
+                                                        <span class="filing-title">电信增值许可证（IDC/ISP/CDN）: B1-20242378 </span>
+                            </a>
+                                                        <a class="filing-itme" href="mailto:xuyuebin@hbhdy.com" target="_blank">
+                                                        <img class="filing-icon" src="/themes/web/www/static/picture/local657930f11d1cd.png">
+                                                        <span class="filing-title">投诉举报机制的途径: 邮箱szhdy@vip.163.com </span>
+                            </a>
+                                                        <a class="filing-itme" href="https://www.12377.cn/" target="_blank">
+                                                        <img class="filing-icon" src="/themes/web/www/upload/local66fa6ed4b49da.png">
+                                                        <span class="filing-title">网上有害信息举报专区 </span>
+                            </a>
+                                                        <a class="filing-itme" href="https://szwljb.sz.gov.cn/" target="_blank">
+                                                        <img class="filing-icon" src="/themes/web/www/upload/local66fb440628ae3.png">
+                                                        <span class="filing-title">深圳市互联网违法和不良信息举报中心 </span>
+                            </a>
+                                                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="online_Nav" style="--servicewidth:40px;
+--serviceline:3">
+    <div class=" animate__animated animate__slideInRight">
+        <div class="phone-container ">
+        <div class="consultation-box">
+            <div class="border-decorator decorator-one"></div>
+            <div class="border-decorator decorator-two"></div>
+            <div class="border-decorator decorator-three"></div>
+            <div class="border-decorator decorator-four"></div>
+            <img class="consultation-image" src="/themes/web/www/static/picture/remoteL17137804762255.jpeg" alt="">
+            <a class="consultation-button" href="/qq" target="blank" style="background: rgba(0, 86, 255, 1)"><p>在线咨询</p></a>
+        </div>
+    </div>
+        <div class="sideNavigation">
+        <div class="online_body">
+                        <div class="online_navItem">
+                <a class="onlineService"><i class="develop sk-tubiao_kefu"></i></a>
+                <div class="hoverWindow">
+                    <div class="onlineservice_triangle"></div>
+                    <div class="onlineService_Body">
+                        <div class="onlineservice_content">
+                            <div class="onlineService_Title">
+                                <div class="onlineService_Title_Icon"></div>
+                                <div class="onlineService_Title_Text">
+                                    <div class="onlineService_kefu display">
+                                                                                <a href="/default/qq.html?qq=2088574593" target="_blank">
+                                        <div class="kefuInformation">
+                                            <div class="kefuInformation-status">
+                                                <img class="qqicon online" src="//q1.qlogo.cn/g?b=qq&amp;nk=2088574593&amp;s=100" alt=" 商务" width="100%" height="100%">
+                                                <i class="online-indicator"></i>
+                                            </div>
+                                            <div class="nicknameInformation">
+                                                    <span class="nickname">商务                                                    </span>
+                                                <span class="qq">合作项目</span>
+                                            </div>
+                                        </div>
+                                        </a>
+                                                                                <a href="/default/qq.html?qq=2890374045" target="_blank">
+                                        <div class="kefuInformation">
+                                            <div class="kefuInformation-status">
+                                                <img class="qqicon online" src="//q1.qlogo.cn/g?b=qq&amp;nk=2890374045&amp;s=100" alt=" 总经理" width="100%" height="100%">
+                                                <i class="online-indicator"></i>
+                                            </div>
+                                            <div class="nicknameInformation">
+                                                    <span class="nickname">总经理                                                    </span>
+                                                <span class="qq">业务合作</span>
+                                            </div>
+                                        </div>
+                                        </a>
+                                                                                <a href="/default/qq.html?qq=304749970" target="_blank">
+                                        <div class="kefuInformation">
+                                            <div class="kefuInformation-status">
+                                                <img class="qqicon online" src="//q1.qlogo.cn/g?b=qq&amp;nk=304749970&amp;s=100" alt=" 技术客服" width="100%" height="100%">
+                                                <i class="online-indicator"></i>
+                                            </div>
+                                            <div class="nicknameInformation">
+                                                    <span class="nickname">技术客服                                                    </span>
+                                                <span class="qq">售后技术</span>
+                                            </div>
+                                        </div>
+                                        </a>
+                                                                                <a href="/default/qq.html?qq=3393762998" target="_blank">
+                                        <div class="kefuInformation">
+                                            <div class="kefuInformation-status">
+                                                <img class="qqicon online" src="//q1.qlogo.cn/g?b=qq&amp;nk=3393762998&amp;s=100" alt=" CDN售后客服" width="100%" height="100%">
+                                                <i class="online-indicator"></i>
+                                            </div>
+                                            <div class="nicknameInformation">
+                                                    <span class="nickname">CDN售后客服                                                    </span>
+                                                <span class="qq">CDN技术售后客服</span>
+                                            </div>
+                                        </div>
+                                        </a>
+                                                                                </div>
+                                    <div class="onlineService_kefu display Telegram  onlineService_bottom">
+                                                                            </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                        <div class="online_navItem">
+                <a class="onlineService"><i class="develop sk-bianji1"></i></a>
+                <div class="hoverWindow">
+                    <div class="onlineservice_triangle"></div>
+                    <div class="onlineService_Body">
+                        <div class="onlineservice_content workOrder">
+                                                        <a class="onlineService_Title" href="/submitticket">
+                                <div class="onlineService_Title_Icon"><i class="sk icon_edit"></i></div>
+                                <div class="onlineService_Title_Text">
+                                    <p class="onlineServicetitle">
+                                        提交工单</p>
+                                    <span class="onlineServicedesc">
+                                    我们会第一时间处理您的需求                                    </span>
+                                </div>
+                            </a>
+                                                                                    <a class="onlineService_Title" href="/submitticket">
+                                <div class="onlineService_Title_Icon"><i class="develop sk-tousujianyi"></i></div>
+                                <div class="onlineService_Title_Text">
+                                    <p class="onlineServicetitle">
+                                        建议反馈</p>
+                                    <span class="onlineServicedesc">
+                                    真诚期待您的宝贵意见                                    </span>
+                                </div>
+                            </a>
+                                                                                    <a class="onlineService_Title" href="/submitticket">
+                                <div class="onlineService_Title_Icon"><i class="develop sk-jubao"></i></div>
+                                <div class="onlineService_Title_Text">
+                                    <p class="onlineServicetitle">
+                                        违法举报</p>
+                                    <span class="onlineServicedesc" style="color:#FA7100">
+                                    "违法有害信息"举报专区                                    </span>
+                                </div>
+                            </a>
+                                                                                </div>
+                    </div>
+                </div>
+            </div>
+                        <div class="online_navItem">
+                <a class="onlineService"><i class="develop sk-31erweima"></i></a>
+                <div class="hoverWindow">
+                    <div class="onlineservice_triangle"></div>
+                    <div class="onlineService_Body officialAccount">
+                                                <div class="onlineservice_content">
+                            <div class="onlineService_Title">
+                                <div class="onlineService_Title_Icon"></div>
+                                <div class="onlineService_Title_Text">
+                                    <img class="qrCode" src="/themes/web/www/upload/local68fe6e94566d1.PNG" alt="31erweima" width="100%" height="100%">
+                                </div>
+                            </div>
+                            <div class="onlineService_Close">商务客服</div>
+                        </div>
+                                                                        <div class="onlineservice_content">
+                            <div class="onlineService_Title">
+                                <div class="onlineService_Title_Icon"></div>
+                                <div class="onlineService_Title_Text">
+                                    <img class="qrCode" src="/themes/web/www/upload/local689613d59f548.png" alt="31erweima" width="100%" height="100%">
+                                </div>
+                            </div>
+                            <div class="onlineService_Close">交流1群</div>
+                        </div>
+                                                                        <div class="onlineservice_content">
+                            <div class="onlineService_Title">
+                                <div class="onlineService_Title_Icon"></div>
+                                <div class="onlineService_Title_Text">
+                                    <img class="qrCode" src="/themes/web/www/upload/local689613f5210bb.png" alt="31erweima" width="100%" height="100%">
+                                </div>
+                            </div>
+                            <div class="onlineService_Close">交流2群</div>
+                        </div>
+                                                                        <div class="onlineservice_content">
+                            <div class="onlineService_Title">
+                                <div class="onlineService_Title_Icon"></div>
+                                <div class="onlineService_Title_Text">
+                                    <img class="qrCode" src="/themes/web/www/upload/local68fe6e38d5511.PNG" alt="31erweima" width="100%" height="100%">
+                                </div>
+                            </div>
+                            <div class="onlineService_Close">交流3群</div>
+                        </div>
+                                                                        <div class="onlineservice_content">
+                            <div class="onlineService_Title">
+                                <div class="onlineService_Title_Icon"></div>
+                                <div class="onlineService_Title_Text">
+                                    <img class="qrCode" src="/themes/web/www/upload/local695ecdc3dc7fa.PNG" alt="31erweima" width="100%" height="100%">
+                                </div>
+                            </div>
+                            <div class="onlineService_Close">交流4群</div>
+                        </div>
+                                                                    </div>
+                </div>
+            </div>
+                    </div>
+        <div class="onlineTop">
+            <div class="onlineTop_icon">
+                <i class="develop sk-fanhuidingbu1"></i>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<script src="/themes/web/www/static/script/wow.min.js?v4.0.28"></script>
+<script src="/themes/web/www/static/script/common.js?v4.0.28"></script>
+<script src="/themes/web/www/static/script/universalComponents.js?v4.0.28"></script>
+<script src="/themes/web/www/default/html/globalJS.js?v4.0.28"></script>
+<script src="/themes/web/www/default/html/wwwJS.js?v4.0.28"></script>
+<div id="notificationmsg" style="display:none;">
+    <div style="text-align: center;">
+<div class="notice-item__bottom" data-v-7baf4590="">
+<div class="unfold-btn" style="text-align: left;" data-v-7baf4590="">
+<p style="text-align: center;"><span style="font-size: 22px; color: rgb(224, 62, 45);"><strong>最新通知</strong></span></p>
+<p>&nbsp;     </p>
+<p style="text-align: center;">合同签约不了的，显示不存在的，可以按照这个方式来：</p>
+<p style="text-align: center;">用户中心左侧-财务管理-合同管理-如果显示合同问题，咱们点击一下甲方信息管理并点击确定，然后再点击上面的立即签订就行。</p>
+<p style="text-align: center;">手机版的话，如果不行，就只能去电脑版进行签约操作。</p>
+</div>
+</div>
+</div></div>
+<style>
+    .layer-btn {
+        padding: 20px 24px 16px;
+        text-align: right;
+        display: flex;
+        flex-direction: row-reverse;
+        gap: 20px;
+    }
+
+    .layer-commit {
+        background: #ccc;
+        color: #fff;
+    }
+</style>
+<script>
+    $(function () {
+        PopUpReminder('1', 'rcI4hTNF', '网站通知', '已阅读知晓', '')
+    });
+</script>
+<script>
+        $(document).ready(function(){
+        if(!(/msie [6|7|8|9]/i.test(navigator.userAgent))){
+        new WOW().init();}; $("[data-toggle='tooltip']").jTippy();$('.nav-layoutcontainer').addClass('black');module.nav();module.footer();module.sidebar();
+        });</script>
+<div class="msg-layer-bg" style="display: block;"></div><div class="msg-layer showAlert" data-animation="slideFromTop" style="display: block; width: 400px; margin: -204px 0px 0px -200px;"><h5>网站通知</h5><div class="msg-con">
+    <div style="text-align: center;">
+<div class="notice-item__bottom" data-v-7baf4590="">
+<div class="unfold-btn" style="text-align: left;" data-v-7baf4590="">
+<p style="text-align: center;"><span style="font-size: 22px; color: rgb(224, 62, 45);"><strong>最新通知</strong></span></p>
+<p>&nbsp;     </p>
+<p style="text-align: center;">合同签约不了的，显示不存在的，可以按照这个方式来：</p>
+<p style="text-align: center;">用户中心左侧-财务管理-合同管理-如果显示合同问题，咱们点击一下甲方信息管理并点击确定，然后再点击上面的立即签订就行。</p>
+<p style="text-align: center;">手机版的话，如果不行，就只能去电脑版进行签约操作。</p>
+</div>
+</div>
+</div></div><div class="layer-close" style="display: block;">×</div><div class="layer-btn"><input type="button" class="layer-cancel" value="已阅读知晓" style="display: inline-block;"><input type="button" class="layer-commit" value="关闭" style="display: inline-block;"></div></div></body></html>
