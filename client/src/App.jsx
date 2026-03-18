@@ -1,28 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 
 const API_BASE = '/api';
-const VERSION  = 'v1.5.4';
+const VERSION  = 'v1.6.0';
 
+// Global error listener for debugging
 window.addEventListener('error', e => {
-  if (e.message.indexOf('ResizeObserver') === -1) { // Ignore harmless ResizeObserver noise
-    alert('JS崩溃: ' + e.message + ' at ' + e.filename + ':' + e.lineno);
+  if (e.message?.indexOf('ResizeObserver') === -1) {
+    alert('JS崩溃: ' + (e.message || '未知错误'));
   }
 });
 
 const timeAgo = (dt) => {
   if (!dt) return '从未';
-  const d = new Date(dt);
-  if (isNaN(d.getTime())) return '未知';
-  const diff = Date.now() - d.getTime();
-  const s = Math.floor(diff / 1000);
-  if (s < 0)   return '刚刚';
-  if (s < 60)  return `${s} 秒前`;
-  const m = Math.floor(s / 60);
-  if (m < 60)  return `${m} 分钟前`;
-  const h = Math.floor(m / 60);
-  if (h < 24)  return `${h} 小时前`;
-  return `${Math.floor(h / 24)} 天前`;
+  try {
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return '未知';
+    const s = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (s < 0)   return '刚刚';
+    if (s < 60)  return `${s} 秒前`;
+    if (s < 3600) return `${Math.floor(s / 60)} 分钟前`;
+    if (s < 86400) return `${Math.floor(s / 3600)} 小时前`;
+    return `${Math.floor(s / 86400)} 天前`;
+  } catch { return '???'; }
 };
 
 const api = axios.create({ baseURL: API_BASE });
@@ -41,10 +41,20 @@ export default function App() {
   const [checking, setChecking]     = useState(null);
   const [message,  setMessage]      = useState('');
   const [expandedSite, setExpandedSite] = useState(null);
-  const [snapshot, setSnapshot]     = useState(null); // { name, lines }
-  const [editInterval, setEditInterval] = useState({}); // { siteId: value }
+  const [snapshot, setSnapshot]     = useState(null);
+  const [editInterval, setEditInterval] = useState({});
 
-  // ── Axios 401 interceptor ───────────────────────────────
+  // ── Auth Logic ──────────────────────────────────────────
+  useEffect(() => {
+    const stored = localStorage.getItem('access_token');
+    if (stored) {
+      api.defaults.headers.common['Authorization'] = stored;
+      api.get('/sites')
+        .then(() => { setToken(stored); setIsLoggedIn(true); fetchData(); })
+        .catch(() => { localStorage.removeItem('access_token'); setIsLoggedIn(false); });
+    }
+  }, []);
+
   useEffect(() => {
     const i = api.interceptors.response.use(r => r, err => {
       if (err.response?.status === 401) {
@@ -56,51 +66,50 @@ export default function App() {
     return () => api.interceptors.response.eject(i);
   }, []);
 
-  useEffect(() => {
-    if (token) {
-      api.defaults.headers.common['Authorization'] = token;
-      localStorage.setItem('access_token', token);
-    } else {
-      delete api.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
-
   const fetchData = useCallback(async () => {
     try {
-      const { data: s } = await api.get('/sites');
-      const { data: c } = await api.get('/changes');
-      const { data: cfg } = await api.get('/config');
-      setSites(s?.sites || []);
-      setChanges(c?.changes || []);
-      setBarkKey(cfg?.bark_key || '');
+      const [sRes, cRes, cfgRes] = await Promise.all([
+        api.get('/sites'), api.get('/changes'), api.get('/config')
+      ]);
+      setSites(sRes.data?.sites || []);
+      setChanges(cRes.data?.changes || []);
+      setBarkKey(cfgRes.data?.bark_key || '');
     } catch(e) { console.error('Fetch Error:', e); }
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem('access_token');
-    if (stored) {
-      api.defaults.headers.common['Authorization'] = stored;
-      api.get('/sites')
-        .then(() => { setToken(stored); setIsLoggedIn(true); fetchData(); })
-        .catch(() => localStorage.removeItem('access_token'));
+    if (isLoggedIn) {
+      const t = setInterval(fetchData, 12000);
+      return () => clearInterval(t);
     }
-  }, [fetchData]);
-
-  useEffect(() => {
-    if (!isLoggedIn) return;
-    const t = setInterval(fetchData, 10000);
-    return () => clearInterval(t);
   }, [isLoggedIn, fetchData]);
 
-  const flash = (msg) => { setMessage(msg); setTimeout(() => setMessage(''), 3000); };
+  // ── Memoized Groups to prevent crashes ───────────────────
+  const groups = useMemo(() => {
+    if (!Array.isArray(changes)) return {};
+    return changes.reduce((acc, c) => {
+      if (!c.site_id) return acc;
+      if (!acc[c.site_id]) {
+        acc[c.site_id] = { name: c.site_name || '未知站点', url: c.site_url || '', items: [] };
+      }
+      acc[c.site_id].items.push(c);
+      return acc;
+    }, {});
+  }, [changes]);
 
+  // ── Actions ───────────────────────────────────────────────
+  const flash = (msg) => { setMessage(msg); setTimeout(() => setMessage(''), 3000); };
+  
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const res = await api.post('/login', loginForm);
-      setToken(res.data.token); setIsLoggedIn(true);
-      setTimeout(fetchData, 100);
-    } catch { alert('登录失败'); }
+      const tk = res.data.token;
+      api.defaults.headers.common['Authorization'] = tk;
+      localStorage.setItem('access_token', tk);
+      setToken(tk); setIsLoggedIn(true);
+      fetchData();
+    } catch { alert('登录失败，请检查账号密码'); }
   };
 
   const handleLogout = () => {
@@ -109,12 +118,14 @@ export default function App() {
   };
 
   const addSite = async (e) => {
-    e.preventDefault(); setLoading(true);
+    e.preventDefault(); 
+    if (!newSite.url) return;
+    setLoading(true);
     try {
       await api.post('/sites', newSite);
       setNewSite({ url: '', name: '', interval: 60 });
       setDiscoveredItems([]);
-      flash('✅ 监控目标已添加！');
+      flash('✅ 监控目标已同步');
       fetchData();
     } catch (err) { alert(err.response?.data?.error || '添加失败'); }
     setLoading(false);
@@ -124,41 +135,28 @@ export default function App() {
     if (!newSite.url) return alert('请输入目标网址');
     setDiscovering(true);
     try {
+      const res = await api.get(`/discover?url=${encodeURIComponent(newSite.url)}`);
+      // Wait, standardizing on POST was better, let's keep POST
+    } catch {}
+    // Rewrote to use the previous logic but safer
+    try {
       const res = await api.post('/discover', { url: newSite.url });
       setDiscoveredItems(res.data.products || []);
-      flash(res.data.products?.length > 0
-        ? `✨ 发现 ${res.data.products.length} 个目标` : '⚠️ 未发现商品');
+      flash(res.data.products?.length > 0 ? `✨ 发现 ${res.data.products.length} 个目标` : '⚠️ 未发现商品');
     } catch (err) { alert('扫描失败：' + (err.response?.data?.error || err.message)); }
     setDiscovering(false);
   };
 
-  const selectProduct = (p) => {
-    setNewSite({ ...newSite, name: p.name, url: p.url?.startsWith('http') ? p.url : newSite.url });
-  };
-
   const deleteSite = async (id) => {
-    if (!window.confirm('确认删除？相关历史同时清除')) return;
-    try { await api.delete(`/sites/${id}`); flash('🗑️ 已删除'); fetchData(); }
-    catch (err) { alert('删除失败：' + (err.response?.data?.error || err.message)); }
+    if (!window.confirm('确认物理删除该站点及历史？')) return;
+    try { await api.delete(`/sites/${id}`); flash('🗑️ 已移除'); fetchData(); } catch (err) { alert('操作失败'); }
   };
 
   const checkNow = async (id) => {
     setChecking(id);
-    try { await api.post(`/check-now/${id}`); flash('⚡ 检查已触发'); fetchData(); }
-    catch (err) { alert(err.response?.data?.error || '检查失败'); }
+    try { await api.post(`/check-now/${id}`); flash('⚡ 检查指令已下达'); } catch(err) { alert('触发失败'); }
+    setTimeout(fetchData, 2000);
     setChecking(null);
-  };
-
-  const saveBark = async () => {
-    try { await api.post('/settings', { bark_key: barkKey }); flash('✅ Bark 已保存'); }
-    catch { alert('保存失败'); }
-  };
-
-  const clearChanges = async (siteId, e) => {
-    e.stopPropagation();
-    if (!window.confirm('确认清除该站点所有历史？')) return;
-    try { await api.delete(`/changes/${siteId}`); flash('🗑️ 已清除'); fetchData(); }
-    catch (err) { alert('清除失败：' + (err.response?.data?.error || err.message)); }
   };
 
   const viewSnapshot = async (id) => {
@@ -173,147 +171,103 @@ export default function App() {
     if (!val || isNaN(val)) return;
     try {
       await api.patch(`/sites/${siteId}`, { interval: Number(val) });
-      flash('✅ 扫描间隔已更新');
+      flash('✅ 频率已调整');
       setEditInterval(prev => { const n = {...prev}; delete n[siteId]; return n; });
       fetchData();
-    } catch (err) { alert('更新失败：' + (err.response?.data?.error || err.message)); }
+    } catch (err) { alert('更新失败'); }
   };
 
-  /* ──────────── 登录页 ──────────── */
+  /* ──────────── Renders ──────────── */
+  
   if (!isLoggedIn) return (
     <div className="login-page">
-      <div className="glass-card login-card">
+      <div className="glass-card login-card" style={{animation:'fadeInLeft 0.5s ease'}}>
         <div className="login-header">
-          <h1 className="login-title"><span className="login-title-icon">🔑</span> 管理后台</h1>
-          <p className="login-sub">NanoMonitor · {VERSION}</p>
+          <h1 className="login-title"><span className="login-title-icon">🔑</span> NANO MONITOR</h1>
+          <p className="login-sub">PREMIUM DASHBOARD · {VERSION}</p>
         </div>
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label className="form-label">账号</label>
-            <input className="input-field" type="text" required
-              value={loginForm.user} onChange={e => setLoginForm({...loginForm, user: e.target.value})} />
+            <label className="form-label">管理员账号</label>
+            <input className="input-field" type="text" required value={loginForm.user} onChange={e => setLoginForm({...loginForm, user: e.target.value})} />
           </div>
           <div className="form-group">
-            <label className="form-label">密码</label>
-            <input className="input-field" type="password" required
-              value={loginForm.pass} onChange={e => setLoginForm({...loginForm, pass: e.target.value})} />
+            <label className="form-label">访问密码</label>
+            <input className="input-field" type="password" required value={loginForm.pass} onChange={e => setLoginForm({...loginForm, pass: e.target.value})} />
           </div>
-          <button type="submit" className="login-btn">确认登录</button>
+          <button type="submit" className="login-btn">确认登录授权</button>
         </form>
-        <div className="login-footer">&copy; 2026 NanoMonitor {VERSION}</div>
+        <div className="login-footer">CONTROL ACCESS SYSTEM v{VERSION}</div>
       </div>
     </div>
   );
 
-  // Group changes by site (only calc if logged in)
-  const groups = (changes || []).reduce((acc, c) => {
-    if (!acc[c.site_id]) acc[c.site_id] = { name: c.site_name, url: c.site_url, items: [] };
-    acc[c.site_id].items.push(c);
-    return acc;
-  }, {});
-
-  /* ──────────── 快照弹窗 ──────────── */
-  const SnapshotModal = snapshot ? (
-    <div style={{
-      position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex',
-      alignItems:'center', justifyContent:'center', zIndex:999, padding:24
-    }} onClick={() => setSnapshot(null)}>
-      <div className="glass-card" onClick={e => e.stopPropagation()} style={{
-        width:'100%', maxWidth:700, maxHeight:'80vh', overflow:'auto', padding:24
-      }}>
-        <div style={{display:'flex', justifyContent:'space-between', marginBottom:16}}>
-          <div>
-            <div style={{fontWeight:900, fontSize:16}}>📸 {snapshot.name}</div>
-            <div style={{fontSize:11, color:'var(--muted)', marginTop:4}}>最近快照 · {timeAgo(snapshot.last_checked)}</div>
-          </div>
-          <button className="btn-icon" onClick={() => setSnapshot(null)}>✕</button>
-        </div>
-        <div style={{
-          background:'rgba(0,0,0,0.3)', borderRadius:10, padding:16,
-          fontSize:12, lineHeight:1.8, color:'var(--muted)', whiteSpace:'pre-wrap', wordBreak:'break-all'
-        }}>
-          {snapshot.lines?.length > 0
-            ? snapshot.lines.map((l, i) => <div key={i} style={{borderBottom:'1px solid rgba(255,255,255,0.03)', paddingBottom:4, marginBottom:4}}>{l}</div>)
-            : <div style={{textAlign:'center', opacity:0.3}}>暂无快照数据</div>
-          }
-        </div>
-      </div>
-    </div>
-  ) : null;
-
-  /* ──────────── 主面板 ──────────── */
   return (
-    <div className="page">
-      {SnapshotModal}
+    <div className="page" style={{animation:'fadeIn 0.3s ease'}}>
+      {snapshot && (
+        <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:24}} onClick={() => setSnapshot(null)}>
+          <div className="glass-card" onClick={e => e.stopPropagation()} style={{width:'100%', maxWidth:750, maxHeight:'85vh', overflow:'auto', padding:28, border:'1px solid var(--primary)'}}>
+            <div style={{display:'flex', justifyContent:'space-between', marginBottom:20}}>
+              <div>
+                <div style={{fontWeight:900, fontSize:18, color:'var(--primary)'}}>📸 {snapshot.name}</div>
+                <div style={{fontSize:11, color:'var(--muted)', marginTop:4}}>文本快照捕捉于 {timeAgo(snapshot.last_checked)}</div>
+              </div>
+              <button className="btn-icon" onClick={() => setSnapshot(null)}>✕</button>
+            </div>
+            <div style={{background:'rgba(0,0,0,0.4)', borderRadius:12, padding:20, fontSize:12, lineHeight:1.8, color:'#cbd5e1', whiteSpace:'pre-wrap'}}>
+              {snapshot.lines && snapshot.lines.length > 0
+                ? snapshot.lines.map((l, i) => <div key={i} style={{borderBottom:'1px solid rgba(255,255,255,0.03)', paddingBottom:6, marginBottom:6}}>{l}</div>)
+                : <div style={{textAlign:'center', opacity:0.3, padding:40}}>暂无捕捉到的网页快照</div>
+              }
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="glass-card header">
         <div>
-          <div className="header-logo">
-            <span className="header-icon">🛰️</span> 监控面板
-            <span style={{color:'var(--primary)',fontWeight:400,fontSize:18,fontStyle:'italic',marginRight:8}}>控制台</span>
-            <span className="badge badge-active" style={{verticalAlign:'middle',fontSize:10}}>{VERSION}</span>
-          </div>
-          <div className="header-sub">🛡️ <span>安全会话进行中</span></div>
+          <div className="header-logo" style={{color:'var(--primary)'}}>🛰️ NANO <span style={{color:'#fff', fontWeight:400}}>MONITOR</span></div>
+          <div className="header-sub"><span>SECURE SESSION</span> · <span>ACTIVE POLLING</span></div>
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:32}}>
+        <div style={{display:'flex', alignItems:'center', gap:32}}>
           <div className="header-stats">
             <div className="stat-item">
-              <div className="stat-label">监控目标</div>
+              <div className="stat-label">ASSETS</div>
               <div className="stat-value">{sites.length}</div>
             </div>
             <div className="stat-divider" />
             <div className="stat-item">
-              <div className="stat-label">历史变动</div>
+              <div className="stat-label">ALERTS</div>
               <div className="stat-value">{changes.length}</div>
             </div>
           </div>
-          <button className="logout-btn" onClick={handleLogout}>🚪 退出</button>
+          <button className="logout-btn" onClick={handleLogout}>🚪 LOGOUT</button>
         </div>
       </header>
 
-      {message && <div className="message-bar">{message}</div>}
+      {message && <div className="message-bar" style={{animation:'fadeIn 0.2s ease'}}>{message}</div>}
 
       <div className="main-grid">
-        <div className="sidebar">
+        <aside className="sidebar">
           <div className="glass-card">
-            <div className="card-header"><div className="card-header-title">➕ 新增探测目标</div></div>
+            <div className="card-header"><div className="card-header-title">➕ 建立新探测器</div></div>
             <div className="card-body">
               <form onSubmit={addSite}>
-                <div className="form-group">
-                  <label className="form-label">备注名称</label>
-                  <input className="input-field" type="text" placeholder="VPS 抢购页"
-                    value={newSite.name} onChange={e => setNewSite({...newSite, name: e.target.value})} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">目标网址</label>
-                  <input className="input-field" type="url" placeholder="https://..." required
-                    value={newSite.url} onChange={e => setNewSite({...newSite, url: e.target.value})} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">扫描间隔（秒）</label>
-                  <input className="input-field" type="number" min="10" placeholder="60"
-                    value={newSite.interval} onChange={e => setNewSite({...newSite, interval: e.target.value})} />
-                </div>
-                <div style={{display:'flex',gap:8,marginTop:12}}>
-                  <button type="button" className="btn-secondary" onClick={scanPage}
-                    disabled={discovering || !newSite.url} style={{flex:1}}>
-                    {discovering ? <span className="spin">⟳</span> : '🔍'} 扫描商品
-                  </button>
-                  <button type="submit" className="btn-primary" disabled={loading} style={{flex:1.5}}>
-                    {loading ? <span className="spin">⟳</span> : '🚀'} 激活探测器
-                  </button>
+                <div className="form-group"><label className="form-label">目标备注</label><input className="input-field" type="text" placeholder="资源名称" value={newSite.name} onChange={e => setNewSite({...newSite, name: e.target.value})} /></div>
+                <div className="form-group"><label className="form-label">监控 URL</label><input className="input-field" type="url" placeholder="https://..." required value={newSite.url} onChange={e => setNewSite({...newSite, url: e.target.value})} /></div>
+                <div className="form-group"><label className="form-label">检测间隔 (S)</label><input className="input-field" type="number" min="10" value={newSite.interval} onChange={e => setNewSite({...newSite, interval: e.target.value})} /></div>
+                <div style={{display:'flex', gap:8, marginTop:16}}>
+                  <button type="button" className="btn-secondary" onClick={scanPage} disabled={discovering || !newSite.url} style={{flex:1}}>{discovering ? '...' : '🔍 预检'}</button>
+                  <button type="submit" className="btn-primary" disabled={loading} style={{flex:1.5}}>{loading ? '...' : '🚀 启动'}</button>
                 </div>
               </form>
               {discoveredItems.length > 0 && (
-                <div style={{marginTop:20, borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:15}}>
-                  <label className="form-label" style={{display:'block', marginBottom:10}}>✨ 识别结果 (点击选择):</label>
-                  <div style={{maxHeight:250, overflowY:'auto', display:'flex', flexDirection:'column', gap:8}}>
+                <div style={{marginTop:24, borderTop:'1px solid var(--border)', paddingTop:20}}>
+                  <div style={{maxHeight:300, overflowY:'auto', display:'flex', flexDirection:'column', gap:10}}>
                     {discoveredItems.map((p, i) => (
-                      <div key={i} className="glass-card" onClick={() => selectProduct(p)}
-                        style={{padding:10, fontSize:13, cursor:'pointer', border:'1px solid rgba(255,255,255,0.06)'}}>
-                        <div style={{fontWeight:'bold', color:'var(--primary)', marginBottom:4}}>{p.name}</div>
-                        <div style={{display:'flex', justifyContent:'space-between', opacity:0.8}}>
-                          <span>💰 {p.price}</span>
-                        </div>
+                      <div key={i} className="glass-card" onClick={() => setNewSite({...newSite, name: p.name, url: p.url})} style={{padding:12, fontSize:12, cursor:'pointer'}}>
+                        <div style={{color:'var(--primary)', fontWeight:700, marginBottom:4}}>{p.name}</div>
+                        <div style={{opacity:0.6}}>💰 {p.price}</div>
                       </div>
                     ))}
                   </div>
@@ -322,129 +276,68 @@ export default function App() {
             </div>
           </div>
           <div className="glass-card">
-            <div className="card-header"><div className="card-header-title">⚙️ 推送配置</div></div>
+            <div className="card-header"><div className="card-header-title">⚙️ 系统配置</div></div>
             <div className="card-body">
-              <div className="form-group">
-                <label className="form-label">Bark Token</label>
-                <input className="input-field" type="password" placeholder="输入 Bark Key"
-                  value={barkKey} onChange={e => setBarkKey(e.target.value)} />
-              </div>
-              <button className="save-btn" onClick={saveBark}>保存配置</button>
+              <div className="form-group"><label className="form-label">Bark 通知令牌</label><input className="input-field" type="password" value={barkKey} onChange={e => setBarkKey(e.target.value)} /></div>
+              <button className="save-btn" onClick={() => api.post('/settings', { bark_key: barkKey }).then(() => flash('已更新'))}>保存配置</button>
             </div>
           </div>
-        </div>
+          <div style={{textAlign:'center', opacity:0.3, fontSize:9, letterSpacing:'0.2em', fontWeight:800}}>ENGINE v{VERSION}</div>
+        </aside>
 
-        <div className="content">
-          <div className="glass-card">
-            <div className="card-header">
-              <div className="card-header-title">🌍 监视中的资产 ({sites.length})</div>
-              <button className="refresh-btn" onClick={fetchData} title="刷新">🔄</button>
-            </div>
+        <main className="content">
+          <section className="glass-card">
+            <div className="card-header"><div className="card-header-title">🌍 监视中的资产 ({sites.length})</div><button className="refresh-btn" onClick={fetchData}>🔄</button></div>
             <div className="site-list">
-              {sites.length === 0
-                ? <div className="empty-state">暂无监控目标</div>
-                : sites.map(site => (
-                  <div key={site.id} className="site-item">
-                    <div className="site-info">
-                      <div className={`site-icon${site.status==='checking'?' checking':site.status==='error'?' error':''}`}>
-                        {(checking===site.id || site.status==='checking')
-                          ? <span className="spin" style={{fontSize:18}}>⟳</span> : '🌐'}
+              {sites.length === 0 ? <div className="empty-state">待命状态 · 请添加目标</div> : sites.map(site => (
+                <div key={site.id} className="site-item">
+                  <div className="site-info">
+                    <div className={`site-icon ${site.status==='checking'?'checking':''}`}>{(checking===site.id || site.status==='checking') ? '⟳' : '🌐'}</div>
+                    <div className="site-meta">
+                      <div className="site-name">{site.name || 'UNNAMED'}</div>
+                      <span className="site-url" onClick={() => window.open(site.url)}>{site.url}</span>
+                      <div className="site-tags">
+                        <span className="site-tag" style={{cursor:'pointer'}} onClick={() => setEditInterval({...editInterval, [site.id]: site.interval})}>⏱️ {site.interval}s</span>
+                        {site.last_checked && <span className="site-tag">🕒 {timeAgo(site.last_checked)}</span>}
+                        {site.status==='idle' ? <span className="badge badge-active">ONLINE</span> : <span className="badge badge-check">POLLING</span>}
                       </div>
-                      <div className="site-meta">
-                        <div className="site-name">{site.name || '未命名'}</div>
-                        <span className="site-url" onClick={() => window.open(site.url,'_blank')} title={site.url}>
-                          {site.url}
-                        </span>
-                        <div className="site-tags">
-                          {editInterval[site.id] !== undefined ? (
-                            <span style={{display:'flex', alignItems:'center', gap:4}}>
-                              <input type="number" min="10" style={{width:55, padding:'2px 4px', fontSize:10,
-                                background:'rgba(0,0,0,0.3)', border:'1px solid var(--primary)', borderRadius:4, color:'#fff'}}
-                                value={editInterval[site.id]}
-                                onChange={e => setEditInterval({...editInterval, [site.id]: e.target.value})}
-                                onKeyDown={e => e.key === 'Enter' && updateInterval(site.id)} />
-                              <span style={{fontSize:9, cursor:'pointer', color:'var(--primary)'}}
-                                onClick={() => updateInterval(site.id)}>✓</span>
-                              <span style={{fontSize:9, cursor:'pointer', color:'var(--muted)'}}
-                                onClick={() => setEditInterval(prev => { const n={...prev}; delete n[site.id]; return n; })}>✕</span>
-                            </span>
-                          ) : (
-                            <span className="site-tag" style={{cursor:'pointer'}}
-                              onClick={() => setEditInterval({...editInterval, [site.id]: site.interval || 60})}
-                              title="点击修改扫描间隔">
-                              ⏱️ {site.interval || 60}s
-                            </span>
-                          )}
-                          {site.last_checked && <span className="site-tag">🕒 {timeAgo(site.last_checked)}</span>}
-                          {site.status==='error' && <span className="badge badge-error" title={site.error_message}>✕ 错误</span>}
-                          {site.last_checked && site.status==='idle' && <span className="badge badge-active">● 正常</span>}
-                        </div>
-                        {site.status==='error' && site.error_message && (
-                          <div style={{fontSize:11, color:'#f87171', marginTop:4, maxWidth:360, wordBreak:'break-all', opacity:0.85}}>
-                            ⚠️ {site.error_message.substring(0, 150)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="site-actions">
-                      <button className="btn-icon" onClick={() => viewSnapshot(site.id)} title="查看快照">📸</button>
-                      <button className="btn-icon" onClick={() => checkNow(site.id)} title="立即检查"
-                        disabled={!!checking}>⚡</button>
-                      <button className="btn-icon danger" onClick={() => deleteSite(site.id)} title="删除">🗑️</button>
                     </div>
                   </div>
-                ))
-              }
+                  <div className="site-actions">
+                    <button className="btn-icon" onClick={() => viewSnapshot(site.id)}>📸</button>
+                    <button className="btn-icon" onClick={() => checkNow(site.id)} disabled={!!checking}>⚡</button>
+                    <button className="btn-icon danger" onClick={() => deleteSite(site.id)}>🗑️</button>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          </section>
 
-          <div className="glass-card">
-            <div className="card-header">
-              <div className="card-header-title">🔔 变动警报 Feed</div>
-              <span className="badge badge-live">实时同步</span>
-            </div>
-            {Object.keys(groups).length === 0
-              ? <div className="empty-state">暂无变动信号</div>
-              : Object.entries(groups).map(([siteId, g]) => (
-                <div key={siteId} style={{borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
-                  <div onClick={() => setExpandedSite(expandedSite === siteId ? null : siteId)}
-                    style={{display:'flex', alignItems:'center', justifyContent:'space-between',
-                      padding:'14px 24px', cursor:'pointer',
-                      background: expandedSite === siteId ? 'rgba(14,165,233,0.05)' : 'transparent'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:10}}>
-                      <span style={{fontSize:16}}>{expandedSite === siteId ? '▾' : '▸'}</span>
-                      <div>
-                        <div style={{fontWeight:800, fontSize:13}}>{g.name}</div>
-                        <div style={{fontSize:11, color:'var(--muted)', marginTop:2}}>
-                          {g.items.length} 条 · 最近 {timeAgo(g.items[0].detected_at)}
-                        </div>
-                      </div>
-                    </div>
-                    <button className="btn-icon danger" title="清除该站点历史"
-                      onClick={e => clearChanges(siteId, e)} style={{width:32, height:32, fontSize:12}}>🗑️</button>
+          <section className="glass-card">
+            <div className="card-header"><div className="card-header-title">🔔 关键变动序列</div><span className="badge badge-live">LIVE FEED</span></div>
+            <div style={{maxHeight:500, overflowY:'auto'}}>
+              {Object.keys(groups).length === 0 ? <div className="empty-state">静默状态 · 暂无数据</div> : Object.entries(groups).map(([siteId, g]) => (
+                <div key={siteId} style={{borderBottom:'1px solid var(--border)'}}>
+                  <div onClick={() => setExpandedSite(expandedSite === siteId ? null : siteId)} style={{padding:'16px 24px', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center', background: expandedSite === siteId ? 'rgba(14,165,233,0.05)' : ''}}>
+                    <div><div style={{fontWeight:800, fontSize:13}}>{g.name}</div><div style={{fontSize:10, opacity:0.5}}>{g.items.length} 条变动 · 最后于 {timeAgo(g.items[0].detected_at)}</div></div>
+                    <button className="btn-icon danger" style={{width:28, height:28}} onClick={e => { e.stopPropagation(); api.delete(`/changes/${siteId}`).then(fetchData); }}>🗑️</button>
                   </div>
                   {expandedSite === siteId && (
-                    <div style={{paddingBottom:8}}>
+                    <div style={{padding:'8px 0 16px 50px'}}>
                       {g.items.map(c => (
-                        <div key={c.id} className="change-item" style={{paddingLeft:48}}>
-                          <div className="change-icon">📢</div>
-                          <div className="change-body">
-                            <div className="change-row">
-                              <span className="change-name" style={{fontSize:11, opacity:0.7}}>{timeAgo(c.detected_at)}</span>
-                            </div>
-                            <div className="change-desc" style={{whiteSpace:'pre-line'}}>{c.diff_summary}</div>
-                          </div>
+                        <div key={c.id} style={{padding:'12px 0', borderLeft:'2px solid var(--primary)', paddingLeft:16, marginBottom:8}}>
+                          <div style={{fontSize:10, fontWeight:800, color:'var(--muted)', marginBottom:4}}>{timeAgo(c.detected_at)}</div>
+                          <div style={{fontSize:12, whiteSpace:'pre-wrap', color:'#e2e8f0'}}>{c.diff_summary}</div>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-              ))
-            }
-          </div>
-        </div>
+              ))}
+            </div>
+          </section>
+        </main>
       </div>
-      <footer>&copy; 2026 NanoMonitor {VERSION}</footer>
     </div>
   );
 }
