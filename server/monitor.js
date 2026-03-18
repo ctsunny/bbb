@@ -209,7 +209,7 @@ const discoverProducts = async (url) => {
     return products;
   } catch (error) {
     console.error(`Error discovering products at ${url}:`, error.message);
-    return [];
+    throw new Error(error.message);
   } finally {
     if (browser) await browser.close();
   }

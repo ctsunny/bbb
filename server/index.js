@@ -63,8 +63,12 @@ app.get('/api/sites', auth, (req, res) => {
 app.post('/api/discover', auth, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL is required' });
-  const products = await discoverProducts(url);
-  res.json({ products });
+  try {
+    const products = await discoverProducts(url);
+    res.json({ products });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/sites', auth, (req, res) => {
