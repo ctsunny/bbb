@@ -94,17 +94,52 @@ main_menu() {
         read -p "Please select an option [0-11]: " opt
         
         case $opt in
-            1) echo "Reinstalling..."; sleep 1 ;;
-            2) echo "Updating..."; sleep 1 ;;
+            1) 
+                echo -e "${YELLOW}Installing/Reinstalling dependencies (Server & Client)...${NC}"
+                (cd server && npm install)
+                (cd client && npm install)
+                echo -e "${GREEN}Dependencies installed! Starting initial run...${NC}"
+                node server/index.js &
+                sleep 5
+                ;;
+            2) 
+                echo -e "${YELLOW}Updating from GitHub...${NC}"
+                git pull
+                (cd server && npm install)
+                (cd client && npm install)
+                echo -e "${GREEN}System Updated. Restarting...${NC}"
+                systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo "Please manual restart."
+                sleep 2
+                ;;
             3) show_config ;;
             4) reset_pass ;;
             5) reset_path ;;
             6) reset_token ;;
             7) config_bark ;;
-            8) journalctl -u monitor -f ;;
-            9) systemctl restart monitor ;;
-            10) echo "Uninstalling..."; sleep 1 ;;
-            11) echo "Shortcut created."; sleep 1 ;;
+            8) 
+                echo -e "${BLUE}Viewing real-time logs (Ctrl+C to stop)...${NC}"
+                journalctl -u monitor -f 2>/dev/null || tail -f server/logs.log 2>/dev/null || echo "Logs not found."
+                sleep 1 
+                ;;
+            9) 
+                echo -e "${YELLOW}Restarting Monitor Service...${NC}"
+                systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo "Restarted failed. Try manually."
+                sleep 2
+                ;;
+            10) 
+                read -p "Are you SURE you want to uninstall? Content will be lost. [y/N]: " confirm
+                if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
+                    echo -e "${RED}Uninstalling...${NC}"
+                    rm "$DB_PATH"
+                    echo -e "${YELLOW}Database purged. Manually delete the 'bbb' directory to finish.${NC}"
+                    exit 0
+                fi
+                ;;
+            11) 
+                echo "alias monitor='./menu.sh'" >> ~/.bashrc
+                echo -e "${GREEN}Created 'monitor' shortcut! Restart your shell to use it.${NC}"
+                sleep 2
+                ;;
             0) exit 0 ;;
             *) echo -e "${RED}Invalid Option!${NC}"; sleep 1 ;;
         esac
