@@ -1,0 +1,49 @@
+build_release	Build Frontend	﻿2026-03-18T16:17:08.3376442Z ##[group]Run npm install
+build_release	Build Frontend	2026-03-18T16:17:08.3377368Z [36;1mnpm install[0m
+build_release	Build Frontend	2026-03-18T16:17:08.3377649Z [36;1mnpm run build[0m
+build_release	Build Frontend	2026-03-18T16:17:08.3435337Z shell: /usr/bin/bash -e {0}
+build_release	Build Frontend	2026-03-18T16:17:08.3435737Z ##[endgroup]
+build_release	Build Frontend	2026-03-18T16:17:09.3619650Z npm warn EBADENGINE Unsupported engine {
+build_release	Build Frontend	2026-03-18T16:17:09.3628934Z npm warn EBADENGINE   package: '@oxc-project/runtime@0.115.0',
+build_release	Build Frontend	2026-03-18T16:17:09.3629991Z npm warn EBADENGINE   required: { node: '^20.19.0 || >=22.12.0' },
+build_release	Build Frontend	2026-03-18T16:17:09.3631026Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+build_release	Build Frontend	2026-03-18T16:17:09.3631799Z npm warn EBADENGINE }
+build_release	Build Frontend	2026-03-18T16:17:09.3632356Z npm warn EBADENGINE Unsupported engine {
+build_release	Build Frontend	2026-03-18T16:17:09.3633250Z npm warn EBADENGINE   package: '@vitejs/plugin-react@6.0.1',
+build_release	Build Frontend	2026-03-18T16:17:09.3638322Z npm warn EBADENGINE   required: { node: '^20.19.0 || >=22.12.0' },
+build_release	Build Frontend	2026-03-18T16:17:09.3639430Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+build_release	Build Frontend	2026-03-18T16:17:09.3641536Z npm warn EBADENGINE }
+build_release	Build Frontend	2026-03-18T16:17:09.3642228Z npm warn EBADENGINE Unsupported engine {
+build_release	Build Frontend	2026-03-18T16:17:09.3642952Z npm warn EBADENGINE   package: 'rolldown@1.0.0-rc.9',
+build_release	Build Frontend	2026-03-18T16:17:09.3643858Z npm warn EBADENGINE   required: { node: '^20.19.0 || >=22.12.0' },
+build_release	Build Frontend	2026-03-18T16:17:09.3644836Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+build_release	Build Frontend	2026-03-18T16:17:09.3645527Z npm warn EBADENGINE }
+build_release	Build Frontend	2026-03-18T16:17:09.3646094Z npm warn EBADENGINE Unsupported engine {
+build_release	Build Frontend	2026-03-18T16:17:09.3647539Z npm warn EBADENGINE   package: 'vite@8.0.0',
+build_release	Build Frontend	2026-03-18T16:17:09.3648449Z npm warn EBADENGINE   required: { node: '^20.19.0 || >=22.12.0' },
+build_release	Build Frontend	2026-03-18T16:17:09.3649448Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+build_release	Build Frontend	2026-03-18T16:17:09.3650198Z npm warn EBADENGINE }
+build_release	Build Frontend	2026-03-18T16:17:11.5770767Z 
+build_release	Build Frontend	2026-03-18T16:17:11.5771600Z added 175 packages, and audited 176 packages in 3s
+build_release	Build Frontend	2026-03-18T16:17:11.5772486Z 
+build_release	Build Frontend	2026-03-18T16:17:11.5773109Z 43 packages are looking for funding
+build_release	Build Frontend	2026-03-18T16:17:11.5773789Z   run `npm fund` for details
+build_release	Build Frontend	2026-03-18T16:17:11.5782035Z 
+build_release	Build Frontend	2026-03-18T16:17:11.5782577Z found 0 vulnerabilities
+build_release	Build Frontend	2026-03-18T16:17:11.7168714Z 
+build_release	Build Frontend	2026-03-18T16:17:11.7169866Z > client@0.0.0 build
+build_release	Build Frontend	2026-03-18T16:17:11.7171552Z > vite build
+build_release	Build Frontend	2026-03-18T16:17:11.7171778Z 
+build_release	Build Frontend	2026-03-18T16:17:11.7630974Z [33mYou are using Node.js 18.20.8. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.[39m
+build_release	Build Frontend	2026-03-18T16:17:11.7672350Z file:///home/runner/work/bbb/bbb/client/node_modules/vite/dist/node/cli.js:534
+build_release	Build Frontend	2026-03-18T16:17:11.7673635Z 				this.dispatchEvent(new CustomEvent(`command:${commandName}`, { detail: command }));
+build_release	Build Frontend	2026-03-18T16:17:11.7674621Z 				                       ^
+build_release	Build Frontend	2026-03-18T16:17:11.7674890Z 
+build_release	Build Frontend	2026-03-18T16:17:11.7675199Z ReferenceError: CustomEvent is not defined
+build_release	Build Frontend	2026-03-18T16:17:11.7675917Z     at CAC.parse (file:///home/runner/work/bbb/bbb/client/node_modules/vite/dist/node/cli.js:534:28)
+build_release	Build Frontend	2026-03-18T16:17:11.7676600Z     at file:///home/runner/work/bbb/bbb/client/node_modules/vite/dist/node/cli.js:835:5
+build_release	Build Frontend	2026-03-18T16:17:11.7677460Z     at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+build_release	Build Frontend	2026-03-18T16:17:11.7677956Z     at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+build_release	Build Frontend	2026-03-18T16:17:11.7678260Z 
+build_release	Build Frontend	2026-03-18T16:17:11.7678346Z Node.js v18.20.8
+build_release	Build Frontend	2026-03-18T16:17:11.7792247Z ##[error]Process completed with exit code 1.
