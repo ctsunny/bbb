@@ -148,15 +148,24 @@ const discoverProducts = async (url) => {
       if (items.length > 0) return items;
 
       // 2. Heuristic: Look for elements that look like price + text
-      const priceRegex = /([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?元)/g;
-      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+      const priceRegex = /([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?(元|\/月|起))/g;
+      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null, false);
       let node;
       const candidates = [];
       
       while (node = walk.nextNode()) {
-        const text = node.textContent.trim();
-        if (priceRegex.test(text)) {
-          let parent = node.parentElement;
+        let isPrice = false;
+        if (node.nodeType === Node.TEXT_NODE) {
+          if (priceRegex.test(node.textContent.trim())) isPrice = true;
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const className = (node.className || '').toString().toLowerCase();
+          if (className.includes('price') || className.includes('amount')) {
+            isPrice = true;
+          }
+        }
+
+        if (isPrice) {
+          let parent = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
           // Look for container
           for (let i = 0; i < 5; i++) {
             if (!parent) break;
@@ -179,7 +188,7 @@ const discoverProducts = async (url) => {
 
         // Simple extraction
         const lines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        const priceMatch = fullText.match(/([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?元)/);
+        const priceMatch = fullText.match(/([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?(元|\/月|起))/);
         
         items.push({
           name: lines[0] || 'Unknown',
