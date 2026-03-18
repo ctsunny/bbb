@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 
 const API_BASE = '/api';
-const VERSION  = 'v1.7.2';
+const VERSION  = 'v1.7.3';
 
 // Global error listener for debugging
 window.addEventListener('error', e => {

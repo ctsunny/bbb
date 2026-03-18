@@ -7,7 +7,7 @@ const db      = require('./db');
 const { runMonitor, checkSite, discoverProducts } = require('./monitor');
 require('dotenv').config();
 
-const VERSION = 'v1.7.2';
+const VERSION = 'v1.7.3';
 const app     = express();
 const PORT    = process.env.PORT || 3001;
 

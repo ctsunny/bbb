@@ -7,7 +7,7 @@ const MAX_CHANGES_PER_SITE = 20;
 
 // ── 噪音配置 ────────────────────────────────────────────────────────────
 const IGNORE_TAGS = ['script', 'style', 'noscript', 'nav', 'footer', 'header', 'aside', 'iframe', 'svg', 'button', 'input', 'form'];
-const IGNORE_CLASSES_IDS = ['menu', 'nav', 'footer', 'aside', 'copyright', 'bottom', 'top', 'sidebar', 'popup', 'modal', 'advert', 'notice', 'breadcrumb', 'contact', 'customer'];
+const IGNORE_CLASSES_IDS = ['menu', 'nav', 'footer', 'aside', 'copyright', 'sidebar', 'popup', 'modal', 'advert', 'notice', 'breadcrumb', 'contact', 'customer'];
 const NOISE_KEYWORDS = ['版权', '备案', 'ICP备', '网安备', '联系我们', '举报', '关于我们', '投诉', '友情链接', '常见问题', '下载中心', '会员中心', '注册', '登录', '扫码关注', '微信', 'QQ', '服务条款', '隐私政策', '地址：', 'Copyright', 'All Rights Reserved'];
 
 const NOISE_LINE_RE = /^(\d{1,4}[:\-\/]\d{2}|\d+\.?\d*\s*(件|个|条|次|人|分钟前|小时前|天前|秒前|评论|浏览|收藏|点赞|已售|库存|剩余|还剩|in stock|left|%|折))$/i;
@@ -64,8 +64,10 @@ const extractSnapshot = async (page) => {
     
     // 3. 后期精简：如果一行字包含大量标点或看起来像菜单，剔除
     return lines.filter(l => {
+      // 过滤掉包含过多连续分割符的菜单行
       if (l.split('|').length > 5) return false;
-      if (l.split(' ').length > 20 && !l.includes('￥') && !l.includes('$')) return false; // 太长的段落如果没价格可能是文章
+      // 太长的无价格无意义段落可能是纯粹的文章废话，但放宽到 200 字符
+      if (l.length > 200 && !l.includes('￥') && !l.includes('$')) return false; 
       return true;
     }).slice(0, 300);
   }, IGNORE_TAGS, IGNORE_CLASSES_IDS, NOISE_KEYWORDS);
