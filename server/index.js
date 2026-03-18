@@ -7,7 +7,7 @@ const db      = require('./db');
 const { runMonitor, checkSite, discoverProducts } = require('./monitor');
 require('dotenv').config();
 
-const VERSION = 'v1.6.0';
+const VERSION = 'v1.6.2';
 const app     = express();
 const PORT    = process.env.PORT || 3001;
 
@@ -81,7 +81,6 @@ app.get('/api/sites', auth, wrap((req, res) => {
   const rows = safeAll("SELECT * FROM sites ORDER BY id DESC");
   const sites = rows.map(s => ({
     ...s,
-    // Fix time format to ISO with Z for frontend
     last_checked: s.last_checked ? (s.last_checked.replace(' ', 'T') + (s.last_checked.endsWith('Z') ? '' : 'Z')) : null,
   }));
   res.json({ sites });
@@ -167,22 +166,23 @@ app.use((req, res, next) => {
   
   if (req.path.startsWith(base + '/')) {
     const originalUrl = req.url;
-    // Strip base prefix for express.static
     req.url = req.url.substring(base.length);
-    if (req.url === '' || req.url === '/') {
-      req.url = '/index.html';
-    }
+    if (req.url === '' || req.url === '/') req.url = '/index.html';
     return express.static(distPath)(req, res, () => {
-      // If not a static file, serve index.html (SPA)
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-  
   res.status(403).send('<h1>403 Forbidden</h1><p>NanoMonitor Access Protocol Required</p>');
 });
 
 cron.schedule('* * * * *', () => runMonitor());
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`NanoMonitor v1.6.1 active at http://0.0.0.0:${PORT}`);
+  const access = getSetting('access_path');
+  console.log(`\n=================================================`);
+  console.log(`🚀 NanoMonitor ${VERSION} 已就绪！`);
+  console.log(`🔗 专用后台路径: http://您的服务器IP:${PORT}/console-${access}`);
+  console.log(`🔑 登 录 账 号: admin`);
+  console.log(`🔑 登 录 密 码: ${getSetting('admin_pass')}`);
+  console.log(`=================================================\n`);
 });
