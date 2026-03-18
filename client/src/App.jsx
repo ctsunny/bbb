@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = '/api';
 
 // Simple SVG icons (no lucide dependency needed)
 const Icon = ({ d, size = 18 }) => (

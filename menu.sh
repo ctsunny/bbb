@@ -85,7 +85,7 @@ show_config() {
     IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
 
     echo ""
-    echo -e "${BOLD}${BLUE}  面板地址    :${NC} ${YELLOW}http://$IP:5173/${NC}"
+    echo -e "${BOLD}${BLUE}  面板地址    :${NC} ${YELLOW}http://$IP:3001/${NC}"
     echo -e "${BOLD}${BLUE}  用户名      :${NC} ${GREEN}$USER${NC}"
     echo -e "${BOLD}${BLUE}  登录密码    :${NC} ${RED}$PASS${NC}"
     echo -e "${BOLD}${BLUE}  注册 Token  :${NC} $TOKEN"
@@ -194,23 +194,19 @@ while true; do
             npm install --legacy-peer-deps 2>&1 | tail -3
             echo -e "${GREEN}  ✓ 客户端依赖安装完成${NC}"
 
-            # 启动服务
-            echo -e "${BLUE}  [4/4] 初始化数据库并启动服务...${NC}"
-            cd "$SCRIPT_DIR"
+            # 编译前端
+            echo -e "${BLUE}  [4/5] 编译前端静态文件...${NC}"
+            cd "$SCRIPT_DIR/client"
+            npm run build 2>&1 | tail -3
+            echo -e "${GREEN}  ✓ 前端编译完成${NC}"
 
-            # 杀掉旧进程
+            # 启动后端（同时提供前端文件）
+            echo -e "${BLUE}  [5/5] 启动服务...${NC}"
+            cd "$SCRIPT_DIR"
             pkill -f "node server/index.js" 2>/dev/null
             pkill -f "vite" 2>/dev/null
             sleep 1
-
-            # 启动后端
             nohup node "$SERVER_DIR/index.js" > "$SERVER_DIR/server.log" 2>&1 &
-            BACKEND_PID=$!
-            sleep 4
-
-            # 启动前端
-            nohup npx --prefix "$SCRIPT_DIR/client" vite --host 0.0.0.0 > "$SCRIPT_DIR/client/client.log" 2>&1 &
-            FRONTEND_PID=$!
             sleep 4
 
             echo -e "${GREEN}  ✓ 服务已全部启动！${NC}"
@@ -225,7 +221,7 @@ while true; do
 
             echo -e "  ${BOLD}${YELLOW}══════════ 安装完成！以下是你的登录信息 ══════════${NC}"
             echo ""
-            echo -e "  ${BOLD}${BLUE}  面板地址  :${NC} ${YELLOW}http://$SHOW_IP:5173/${NC}"
+            echo -e "  ${BOLD}${BLUE}  面板地址  :${NC} ${YELLOW}http://$SHOW_IP:3001/${NC}"
             echo -e "  ${BOLD}${BLUE}  用户名    :${NC} ${GREEN}$SHOW_USER${NC}"
             echo -e "  ${BOLD}${BLUE}  登录密码  :${NC} ${RED}$SHOW_PASS${NC}"
             echo -e "  ${BOLD}${BLUE}  令牌      :${NC} $SHOW_TOKEN"
