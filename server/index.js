@@ -86,9 +86,15 @@ app.get('/api/sites', auth, wrap((req, res) => {
   res.json({ sites });
 }));
 
-// ── 新增站点 ────────────────────────────────────────────────────────────
+// ── 新增站点（URL 已存在则更新名称和间隔） ─────────────────────────────
 app.post('/api/sites', auth, wrap((req, res) => {
   const { url, name, interval } = req.body;
+  const existing = db.prepare('SELECT id FROM sites WHERE url = ?').get(url);
+  if (existing) {
+    db.prepare('UPDATE sites SET name = ?, interval = ?, is_active = 1 WHERE id = ?')
+      .run(name || url, Number(interval) || 60, existing.id);
+    return res.json({ id: existing.id, updated: true });
+  }
   const info = db.prepare('INSERT INTO sites (url,name,interval) VALUES (?,?,?)')
     .run(url, name || url, Number(interval) || 60);
   res.json({ id: info.lastInsertRowid });
