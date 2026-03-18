@@ -14,9 +14,12 @@ const timeAgo = (dt) => {
   return `${Math.floor(h / 24)} 天前`;
 };
 
+// Global axios defaults
+const api = axios.create({ baseURL: API_BASE });
+
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [token, setToken]           = useState(() => localStorage.getItem('access_token'));
+  const [token, setToken]           = useState(null);
   const [loginForm, setLoginForm]   = useState({ user: '', pass: '' });
   
   const [sites,    setSites]        = useState([]);
@@ -27,33 +30,64 @@ export default function App() {
   const [checking, setChecking]     = useState(null);
   const [message,  setMessage]      = useState('');
 
-  const authHeader = token ? { Authorization: token } : {};
+  // 1. Setup Axios Interceptors for Global 401 Protection
+  useEffect(() => {
+    const interceptor = api.interceptors.response.use(
+      (res) => res,
+      (err) => {
+        if (err.response && err.response.status === 401) {
+          localStorage.removeItem('access_token');
+          setToken(null);
+          setIsLoggedIn(false);
+        }
+        return Promise.reject(err);
+      }
+    );
+    return () => api.interceptors.response.eject(interceptor);
+  }, []);
 
-  const fetchData = useCallback(async (tok = token) => {
-    const h = { Authorization: tok };
+  // 2. Set token header globally whenever token changes
+  useEffect(() => {
+    if (token) {
+      api.defaults.headers.common['Authorization'] = token;
+      localStorage.setItem('access_token', token);
+    } else {
+      delete api.defaults.headers.common['Authorization'];
+    }
+  }, [token]);
+
+  // 3. Data fetching
+  const fetchData = useCallback(async () => {
     try {
       const [s, c, cfg] = await Promise.all([
-        axios.get(`${API_BASE}/sites`,   { headers: h }),
-        axios.get(`${API_BASE}/changes`, { headers: h }),
-        axios.get(`${API_BASE}/config`,  { headers: h }),
+        api.get(`/sites`),
+        api.get(`/changes`),
+        api.get(`/config`),
       ]);
       setSites(s.data.sites);
       setChanges(c.data.changes);
       setBarkKey(cfg.data.bark_key || '');
     } catch(e) { console.error("Fetch Data Error:", e); }
-  }, [token]);
+  }, []);
 
+  // 4. Initial Auth Check on Mount
   useEffect(() => {
-    if (!token) return;
-    axios.get(`${API_BASE}/sites`, { headers: { Authorization: token } })
-      .then(() => { setIsLoggedIn(true); fetchData(); })
-      .catch((e) => { 
-        console.error("Token verification failed", e);
-        localStorage.removeItem('access_token'); 
-        setToken(null); 
-      });
-  }, [token, fetchData]);
+    const storedToken = localStorage.getItem('access_token');
+    if (storedToken) {
+      // Must set the header manually for this very first check since the token effect might not have run
+      api.get(`/sites`, { headers: { Authorization: storedToken } })
+        .then(() => {
+          setToken(storedToken);
+          setIsLoggedIn(true);
+          fetchData();
+        })
+        .catch(() => {
+          localStorage.removeItem('access_token');
+        });
+    }
+  }, [fetchData]);
 
+  // 5. Polling
   useEffect(() => {
     if (!isLoggedIn) return;
     const t = setInterval(() => fetchData(), 10000);
@@ -63,28 +97,26 @@ export default function App() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_BASE}/login`, loginForm);
-      const tok = res.data.token;
-      localStorage.setItem('access_token', tok);
-      setToken(tok);
+      const res = await api.post(`/login`, loginForm);
+      setToken(res.data.token);
       setIsLoggedIn(true);
-      fetchData(tok);
+      setTimeout(() => fetchData(), 100); // slight delay to ensure headers are applied
     } catch (e) { 
       alert('登录失败：用户名或密码错误'); 
-      console.error(e);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
-    setToken(null); setIsLoggedIn(false);
+    setToken(null); 
+    setIsLoggedIn(false);
   };
 
   const addSite = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(`${API_BASE}/sites`, newSite, { headers: authHeader });
+      await api.post(`/sites`, newSite);
       setNewSite({ url: '', name: '', interval: 60 });
       setMessage('监控目标已添加！');
       setTimeout(() => setMessage(''), 3000);
@@ -95,14 +127,14 @@ export default function App() {
 
   const deleteSite = async (id) => {
     if (!window.confirm('确认删除该监控目标？')) return;
-    await axios.delete(`${API_BASE}/sites/${id}`, { headers: authHeader });
+    await api.delete(`/sites/${id}`);
     fetchData();
   };
 
   const checkNow = async (id) => {
     setChecking(id);
     try {
-      await axios.post(`${API_BASE}/check-now/${id}`, {}, { headers: authHeader });
+      await api.post(`/check-now/${id}`);
       fetchData();
     } catch (err) { alert(err.response?.data?.error || '检查失败'); }
     setChecking(null);
@@ -110,7 +142,7 @@ export default function App() {
 
   const saveBark = async () => {
     try {
-      await axios.post(`${API_BASE}/settings`, { bark_key: barkKey }, { headers: authHeader });
+      await api.post(`/settings`, { bark_key: barkKey });
       alert('Bark 配置已保存！');
     } catch { alert('保存失败'); }
   };
