@@ -1,157 +1,209 @@
 #!/bin/bash
 
-# NanoMonitor / BWPanel 管理脚本 - 中文版
+# NanoMonitor 管理菜单 (BWPanel 版) - 中文
+# 依赖: Node.js + better-sqlite3 (无需 sqlite3 命令行工具)
 
-# 颜色控制
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # 无颜色
+YELLOW='\033[1;33m'
+BLUE='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
 
-SERVER_DIR="$(cd "$(dirname "$0")/server" && pwd)"
+# 脚本所在目录（兼容软链接）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SERVER_DIR="$SCRIPT_DIR/server"
 DB_PATH="$SERVER_DIR/monitor.db"
 
-# --- 功能函数 ---
+# --- 通过 Node.js 读写数据库 (不依赖 sqlite3 命令) ---
 get_setting() {
-    sqlite3 "$DB_PATH" "SELECT value FROM settings WHERE key = '$1';"
+    node "$SERVER_DIR/get_setting.js" "$1" 2>/dev/null
 }
 
 update_setting() {
-    sqlite3 "$DB_PATH" "REPLACE INTO settings (key, value) VALUES ('$1', '$2');"
+    node "$SERVER_DIR/set_setting.js" "$1" "$2" 2>/dev/null
 }
 
+# --- 检查依赖 ---
+check_deps() {
+    if ! command -v node &>/dev/null; then
+        echo -e "${RED}错误：未找到 Node.js，请先安装: curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt install -y nodejs${NC}"
+        exit 1
+    fi
+    if [ ! -f "$SERVER_DIR/node_modules/.bin/_mocha" ] && [ ! -d "$SERVER_DIR/node_modules/better-sqlite3" ]; then
+        echo -e "${YELLOW}提示：依赖未安装，正在自动安装...${NC}"
+        (cd "$SERVER_DIR" && npm install)
+    fi
+}
+
+# --- 查看配置信息 ---
 show_config() {
     clear
-    echo -e "${BLUE}=== 当前面板配置信息 ===${NC}"
     
+    # 先确保数据库已初始化
+    if [ ! -f "$DB_PATH" ]; then
+        echo -e "${RED}数据库未初始化，请先运行《选项 1》安装环境并启动一次服务端！${NC}"
+        read -p "按任意键返回..." -n1 -s
+        return
+    fi
+
     local USER=$(get_setting "admin_user")
     local PASS=$(get_setting "admin_pass")
     local PATH_SUB=$(get_setting "access_path")
     local TOKEN=$(get_setting "reg_token")
     local BARK=$(get_setting "bark_key")
-    local IP=$(curl -s ifconfig.me)
+    local IP
+    IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
 
-    echo -e "面板地址    : ${YELLOW}http://$IP:5173/console-$PATH_SUB${NC}"
-    echo -e "用户名      : ${GREEN}$USER${NC}"
-    echo -e "登录密码    : ${RED}$PASS${NC}"
-    echo -e "访问令牌    : ${BLUE}$TOKEN${NC}"
-    echo -e "Bark 推送   : ${BARK:-'未配置'}"
-    echo -e "常用命令    : systemctl status monitor | journalctl -u monitor -f"
-    echo -e "管理快捷键  : monitor-menu"
-    echo "==================================="
-    read -p "按任意键返回菜单..." -n1 -s
+    echo ""
+    echo -e "${BOLD}${BLUE}  面板地址    :${NC} ${YELLOW}http://$IP:5173/console-$PATH_SUB${NC}"
+    echo -e "${BOLD}${BLUE}  用户名      :${NC} ${GREEN}$USER${NC}"
+    echo -e "${BOLD}${BLUE}  登录密码    :${NC} ${RED}$PASS${NC}"
+    echo -e "${BOLD}${BLUE}  注册 Token  :${NC} $TOKEN"
+    echo -e "${BOLD}${BLUE}  Bark 推送   :${NC} ${BARK:-（未配置）}"
+    echo -e "${BOLD}${BLUE}  常用命令    :${NC} systemctl status monitor | journalctl -u monitor -f"
+    echo -e "${BOLD}${BLUE}  管理命令    :${NC} monitor-menu"
+    echo ""
+    echo -e "  ${YELLOW}=================================${NC}"
+    read -p "  按任意键返回菜单..." -n1 -s
 }
 
+# --- 重置密码 ---
 reset_pass() {
-    local NEW_PASS=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | fold -w 8 | head -n 1)
+    local NEW_PASS
+    NEW_PASS=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | fold -w 10 | head -n 1)
     update_setting "admin_pass" "$NEW_PASS"
-    echo -e "${GREEN}密码重置成功: $NEW_PASS${NC}"
-    sleep 2
+    echo -e "${GREEN}密码重置成功！新密码: ${BOLD}$NEW_PASS${NC}"
+    sleep 3
 }
 
-reset_token() {
-    local NEW_TOKEN=$(openssl rand -hex 16)
-    update_setting "reg_token" "$NEW_TOKEN"
-    echo -e "${GREEN}访问令牌重置成功: $NEW_TOKEN${NC}"
-    sleep 2
-}
-
+# --- 重置访问路径 ---
 reset_path() {
-    local NEW_PATH=$(openssl rand -hex 8)
+    local NEW_PATH
+    NEW_PATH=$(od -A n -t x -N 8 /dev/urandom | tr -d ' \n')
     update_setting "access_path" "$NEW_PATH"
-    echo -e "${GREEN}访问路径重置成功: console-$NEW_PATH${NC}"
-    sleep 2
+    echo -e "${GREEN}访问路径已重置: ${BOLD}console-$NEW_PATH${NC}"
+    sleep 3
 }
 
+# --- 重置 Token ---
+reset_token() {
+    local NEW_TOKEN
+    NEW_TOKEN=$(od -A n -t x -N 16 /dev/urandom | tr -d ' \n')
+    update_setting "reg_token" "$NEW_TOKEN"
+    echo -e "${GREEN}注册 Token 已重置！${NC}"
+    sleep 3
+}
+
+# --- 配置 Bark ---
 config_bark() {
-    read -p "请输入 Bark Key: " BARK_KEY
-    if [ ! -z "$BARK_KEY" ]; then
+    echo ""
+    read -p "  请输入你的 Bark Key: " BARK_KEY
+    if [ -n "$BARK_KEY" ]; then
         update_setting "bark_key" "$BARK_KEY"
-        echo -e "${GREEN}Bark 推送配置已更新！${NC}"
+        echo -e "${GREEN}  Bark 推送配置已保存！${NC}"
+    else
+        echo -e "${YELLOW}  输入为空，未做修改。${NC}"
     fi
     sleep 2
 }
 
-# --- 主菜单 ---
-main_menu() {
-    while true; do
-        clear
-        echo "======== NanoMonitor 管理菜单 (BWPanel 版) ========"
-        echo " 1. 安装 / 重新安装服务端 (依赖环境)"
-        echo " 2. 升级系统 (自动拉取最新 Release)"
-        echo " 3. 查看当前配置与面板地址"
-        echo " 4. 重置管理员密码"
-        echo " 5. 重置面板访问路径 (子目录)"
-        echo " 6. 重置客户端注册 Token"
-        echo " 7. 配置 Bark 推送推送"
-        echo " 8. 查看服务运行状态与日志"
-        echo " 9. 重启监控服务"
-        echo " 10. 完整卸载监控系统"
-        echo " 11. 生成 'monitor' 快捷启动命令"
-        echo " 0. 退出脚本"
-        echo "================================================="
-        read -p "请选择操作 [0-11]: " opt
-        
-        case $opt in
-            1) 
-                echo -e "${YELLOW}正在安装/重装依赖 (Server & Client)...${NC}"
-                (cd server && npm install)
-                (cd client && npm install)
-                echo -e "${GREEN}依赖安装完成！正在尝试启动初始环境...${NC}"
-                if [ -f server/index.js ]; then
-                   node server/index.js > /dev/null 2>&1 &
-                   echo "服务端已在后台启动。"
-                fi
-                sleep 3
-                ;;
-            2) 
-                echo -e "${YELLOW}正在从 GitHub 拉取代码...${NC}"
-                git pull
-                (cd server && npm install)
-                (cd client && npm install)
-                echo -e "${GREEN}系统已更新，正在尝试重启服务...${NC}"
-                systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo "请手动重启服务。"
-                sleep 2
-                ;;
-            3) show_config ;;
-            4) reset_pass ;;
-            5) reset_path ;;
-            6) reset_token ;;
-            7) config_bark ;;
-            8) 
-                echo -e "${BLUE}正在查看实时日志 (按 Ctrl+C 退出)...${NC}"
-                journalctl -u monitor -f 2>/dev/null || tail -f server/logs.log 2>/dev/null || echo "未找到日志文件。"
-                sleep 1 
-                ;;
-            9) 
-                echo -e "${YELLOW}正在重启监控服务...${NC}"
-                systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo "重启失败，请检查服务安装情况。"
-                sleep 2
-                ;;
-            10) 
-                read -p "确定要卸载吗？所有监控数据将丢失！ [y/N]: " confirm
-                if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
-                    echo -e "${RED}正在执行卸载...${NC}"
-                    rm "$DB_PATH"
-                    echo -e "${YELLOW}数据库已清理，请手动删除 'bbb' 文件夹完成卸载。${NC}"
-                    exit 0
-                fi
-                ;;
-            11) 
-                echo "alias monitor='cd $(pwd) && ./menu.sh'" >> ~/.bashrc
-                echo -e "${GREEN}快捷命令 'monitor' 已创建！请执行 'source ~/.bashrc' 或重新进入终端。${NC}"
-                sleep 2
-                ;;
-            0) exit 0 ;;
-            *) echo -e "${RED}输入错误，请输入有效选项！${NC}"; sleep 1 ;;
-        esac
-    done
+# --- 打印主菜单 ---
+print_menu() {
+    clear
+    echo ""
+    echo -e "  ${BOLD}${BLUE}======== NanoMonitor 管理菜单 ========${NC}"
+    echo -e "  ${BOLD}   1.${NC}  安装 / 重新安装依赖（首次必做）"
+    echo -e "  ${BOLD}   2.${NC}  升级系统（自动拉取最新代码）"
+    echo -e "  ${BOLD}   3.${NC}  查看当前配置与面板地址"
+    echo -e "  ${BOLD}   4.${NC}  重置管理员密码"
+    echo -e "  ${BOLD}   5.${NC}  重置面板访问随机路径"
+    echo -e "  ${BOLD}   6.${NC}  重置客户端注册 Token"
+    echo -e "  ${BOLD}   7.${NC}  配置 Bark 推送通知"
+    echo -e "  ${BOLD}   8.${NC}  查看实时服务日志"
+    echo -e "  ${BOLD}   9.${NC}  重启监控服务"
+    echo -e "  ${BOLD}  10.${NC}  完整卸载"
+    echo -e "  ${BOLD}  11.${NC}  添加 'monitor' 全局快捷命令"
+    echo -e "  ${BOLD}${BLUE}  ======================================${NC}"
+    echo -e "  ${BOLD}   0.${NC}  退出"
+    echo ""
 }
 
-# 检查数据库
-if [ ! -f "$DB_PATH" ]; then
-    echo "警告: 监控数据库尚未初始化。请先运行选项 1。"
-fi
+# --- 主循环 ---
+check_deps
 
-main_menu
+while true; do
+    print_menu
+    read -p "  请选择操作 [0-11]: " opt
+    echo ""
+    
+    case $opt in
+        1)
+            echo -e "${YELLOW}  正在安装 / 重新安装依赖...${NC}"
+            (cd "$SERVER_DIR" && npm install) && echo -e "${GREEN}  服务端依赖已安装！${NC}"
+            (cd "$SCRIPT_DIR/client" && npm install) && echo -e "${GREEN}  客户端依赖已安装！${NC}"
+            echo ""
+            echo -e "${YELLOW}  正在启动服务端以初始化数据库...${NC}"
+            node "$SERVER_DIR/index.js" &
+            sleep 4
+            kill %1 2>/dev/null
+            echo -e "${GREEN}  初始化完成！执行 ./menu.sh 继续操作。${NC}"
+            sleep 3
+            ;;
+        2)
+            echo -e "${YELLOW}  正在从 GitHub 拉取最新版本...${NC}"
+            git -C "$SCRIPT_DIR" pull
+            (cd "$SERVER_DIR" && npm install)
+            (cd "$SCRIPT_DIR/client" && npm install)
+            echo -e "${GREEN}  升级完成！${NC}"
+            systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo -e "${YELLOW}  请手动重启服务。${NC}"
+            sleep 3
+            ;;
+        3) show_config ;;
+        4) reset_pass ;;
+        5) reset_path ;;
+        6) reset_token ;;
+        7) config_bark ;;
+        8)
+            echo -e "${BLUE}  实时日志输出 (Ctrl+C 退出)...${NC}"
+            journalctl -u monitor -f 2>/dev/null || \
+            tail -f "$SERVER_DIR/monitor.log" 2>/dev/null || \
+            echo -e "${RED}  未找到日志文件，请确认服务已安装为 systemd 服务。${NC}"
+            ;;
+        9)
+            echo -e "${YELLOW}  正在重启监控服务...${NC}"
+            systemctl restart monitor 2>/dev/null || \
+            pm2 restart monitor 2>/dev/null || \
+            echo -e "${RED}  重启失败，服务可能未安装，请手动执行: node server/index.js${NC}"
+            sleep 2
+            ;;
+        10)
+            echo -e "${RED}  警告：此操作将清除所有监控数据库！${NC}"
+            read -p "  确认卸载？请输入 yes 确认: " confirm
+            if [ "$confirm" = "yes" ]; then
+                rm -f "$DB_PATH"
+                echo -e "${GREEN}  数据库已清理。${NC}"
+                echo -e "${YELLOW}  如需彻底移除，请手动删除整个项目目录。${NC}"
+                exit 0
+            else
+                echo -e "${YELLOW}  操作已取消。${NC}"
+            fi
+            sleep 2
+            ;;
+        11)
+            MENU_PATH="$SCRIPT_DIR/menu.sh"
+            echo "alias monitor-menu='bash $MENU_PATH'" >> ~/.bashrc
+            echo -e "${GREEN}  快捷命令 'monitor-menu' 已添加到 ~/.bashrc${NC}"
+            echo -e "${YELLOW}  请执行: source ~/.bashrc 或重开终端后生效${NC}"
+            sleep 3
+            ;;
+        0)
+            echo -e "  ${GREEN}已退出。再见！${NC}"
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}  无效选项，请重新输入。${NC}"
+            sleep 1
+            ;;
+    esac
+done
