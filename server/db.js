@@ -41,10 +41,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sites_active ON sites(is_active);
 `);
 
-// Add missing columns for backward compatibility (sqlite throws if they exist)
+// Add missing columns for backward compatibility (sqlite throws if column already exists, that's OK)
+// -- sites table migrations --
 try { db.exec("ALTER TABLE sites ADD COLUMN status TEXT DEFAULT 'idle'"); } catch(e) {}
 try { db.exec("ALTER TABLE sites ADD COLUMN error_message TEXT"); } catch(e) {}
 try { db.exec("ALTER TABLE sites ADD COLUMN interval INTEGER DEFAULT 60"); } catch(e) {}
 try { db.exec("ALTER TABLE sites ADD COLUMN is_active INTEGER DEFAULT 1"); } catch(e) {}
+// -- changes table migrations --
+try { db.exec("ALTER TABLE changes ADD COLUMN diff_summary TEXT"); } catch(e) {}
+try { db.exec("ALTER TABLE changes ADD COLUMN full_snapshot TEXT"); } catch(e) {}
 
 module.exports = db;
