@@ -168,15 +168,37 @@ while true; do
     
     case $opt in
         1)
-            echo -e "${YELLOW}  正在安装 / 重新安装依赖...${NC}"
-            (cd "$SERVER_DIR" && npm install) && echo -e "${GREEN}  服务端依赖已安装！${NC}"
-            (cd "$SCRIPT_DIR/client" && npm install) && echo -e "${GREEN}  客户端依赖已安装！${NC}"
+            echo -e "${YELLOW}  ⚙  正在安装 / 重新安装依赖...${NC}"
+            
+            # 安装 C++ 编译工具（better-sqlite3 原生模块必需）
+            echo -e "${BLUE}  → 安装系统编译工具 (build-essential, python3, make)...${NC}"
+            if command -v apt-get &>/dev/null; then
+                apt-get install -y python3 make g++ build-essential 2>&1 | tail -3
+            elif command -v yum &>/dev/null; then
+                yum install -y python3 make gcc-c++ 2>&1 | tail -3
+            fi
+
+            # 清理并重新编译服务端依赖（确保原生模块在当前平台正确编译）
+            echo -e "${BLUE}  → 编译安装服务端依赖...${NC}"
+            cd "$SERVER_DIR"
+            rm -rf node_modules package-lock.json
+            npm install
+            
+            # 安装客户端依赖
+            echo -e "${BLUE}  → 安装客户端依赖...${NC}"
+            cd "$SCRIPT_DIR/client"
+            rm -rf node_modules package-lock.json
+            npm install
+
+            echo -e "${GREEN}  ✓ 所有依赖安装完成！${NC}"
             echo ""
-            echo -e "${YELLOW}  正在启动服务端以初始化数据库...${NC}"
+            echo -e "${YELLOW}  正在初始化数据库...${NC}"
+            cd "$SCRIPT_DIR"
             node "$SERVER_DIR/index.js" &
+            INIT_PID=$!
             sleep 4
-            kill %1 2>/dev/null
-            echo -e "${GREEN}  初始化完成！执行 ./menu.sh 继续操作。${NC}"
+            kill $INIT_PID 2>/dev/null
+            echo -e "${GREEN}  ✓ 数据库初始化完成，执行选项 3 查看面板地址。${NC}"
             sleep 3
             ;;
         2)
