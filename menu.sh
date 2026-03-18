@@ -85,7 +85,7 @@ show_config() {
     IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
 
     echo ""
-    echo -e "${BOLD}${BLUE}  面板地址    :${NC} ${YELLOW}http://$IP:5173/console-$PATH_SUB${NC}"
+    echo -e "${BOLD}${BLUE}  面板地址    :${NC} ${YELLOW}http://$IP:5173/${NC}"
     echo -e "${BOLD}${BLUE}  用户名      :${NC} ${GREEN}$USER${NC}"
     echo -e "${BOLD}${BLUE}  登录密码    :${NC} ${RED}$PASS${NC}"
     echo -e "${BOLD}${BLUE}  注册 Token  :${NC} $TOKEN"
@@ -225,7 +225,7 @@ while true; do
 
             echo -e "  ${BOLD}${YELLOW}══════════ 安装完成！以下是你的登录信息 ══════════${NC}"
             echo ""
-            echo -e "  ${BOLD}${BLUE}  面板地址  :${NC} ${YELLOW}http://$SHOW_IP:5173/console-$SHOW_PATH${NC}"
+            echo -e "  ${BOLD}${BLUE}  面板地址  :${NC} ${YELLOW}http://$SHOW_IP:5173/${NC}"
             echo -e "  ${BOLD}${BLUE}  用户名    :${NC} ${GREEN}$SHOW_USER${NC}"
             echo -e "  ${BOLD}${BLUE}  登录密码  :${NC} ${RED}$SHOW_PASS${NC}"
             echo -e "  ${BOLD}${BLUE}  令牌      :${NC} $SHOW_TOKEN"
