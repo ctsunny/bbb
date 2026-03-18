@@ -110,4 +110,95 @@ const runMonitor = async () => {
   }
 };
 
-module.exports = { runMonitor, checkSite };
+const discoverProducts = async (url) => {
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36');
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+
+    const products = await page.evaluate(() => {
+      const items = [];
+      
+      // 1. Try JSON-LD
+      const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+      scripts.forEach(s => {
+        try {
+          const data = JSON.parse(s.innerText);
+          const processItem = (item) => {
+            if (item['@type'] === 'Product' || item['@type'] === 'Offer') {
+              items.push({
+                name: item.name || 'Unknown Product',
+                price: item.offers?.price || 'N/A',
+                currency: item.offers?.priceCurrency || '',
+                image: item.image || '',
+                url: item.url || window.location.href
+              });
+            }
+          };
+          if (Array.isArray(data)) data.forEach(processItem);
+          else processItem(data);
+        } catch(e) {}
+      });
+
+      if (items.length > 0) return items;
+
+      // 2. Heuristic: Look for elements that look like price + text
+      const priceRegex = /([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?元)/g;
+      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+      let node;
+      const candidates = [];
+      
+      while (node = walk.nextNode()) {
+        const text = node.textContent.trim();
+        if (priceRegex.test(text)) {
+          let parent = node.parentElement;
+          // Look for container
+          for (let i = 0; i < 5; i++) {
+            if (!parent) break;
+            const parentText = parent.innerText;
+            if (parentText.length > 10 && parentText.length < 500) {
+              candidates.push(parent);
+              break;
+            }
+            parent = parent.parentElement;
+          }
+        }
+      }
+
+      // Deduplicate and extract details from candidates
+      const seen = new Set();
+      candidates.forEach(el => {
+        const fullText = el.innerText.replace(/\s+/g, ' ').trim();
+        if (seen.has(fullText)) return;
+        seen.add(fullText);
+
+        // Simple extraction
+        const lines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const priceMatch = fullText.match(/([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?元)/);
+        
+        items.push({
+          name: lines[0] || 'Unknown',
+          price: priceMatch ? priceMatch[0] : 'N/A',
+          text: fullText,
+          image: el.querySelector('img')?.src || ''
+        });
+      });
+
+      return items;
+    });
+
+    return products;
+  } catch (error) {
+    console.error(`Error discovering products at ${url}:`, error.message);
+    return [];
+  } finally {
+    if (browser) await browser.close();
+  }
+};
+
+module.exports = { runMonitor, checkSite, discoverProducts };

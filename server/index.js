@@ -4,7 +4,7 @@ const cron    = require('node-cron');
 const path    = require('path');
 const crypto  = require('crypto');
 const db      = require('./db');
-const { runMonitor, checkSite } = require('./monitor');
+const { runMonitor, checkSite, discoverProducts } = require('./monitor');
 require('dotenv').config();
 
 const app            = express();
@@ -58,6 +58,13 @@ app.get('/api/config', auth, (req, res) => {
 
 app.get('/api/sites', auth, (req, res) => {
   res.json({ sites: db.prepare('SELECT * FROM sites ORDER BY last_checked DESC').all() });
+});
+
+app.post('/api/discover', auth, async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL is required' });
+  const products = await discoverProducts(url);
+  res.json({ products });
 });
 
 app.post('/api/sites', auth, (req, res) => {

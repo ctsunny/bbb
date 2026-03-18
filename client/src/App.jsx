@@ -27,6 +27,8 @@ export default function App() {
   const [barkKey,  setBarkKey]      = useState('');
   const [newSite,  setNewSite]      = useState({ url: '', name: '', interval: 60 });
   const [loading,  setLoading]      = useState(false);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoveredItems, setDiscoveredItems] = useState([]);
   const [checking, setChecking]     = useState(null);
   const [message,  setMessage]      = useState('');
 
@@ -118,11 +120,36 @@ export default function App() {
     try {
       await api.post(`/sites`, newSite);
       setNewSite({ url: '', name: '', interval: 60 });
+      setDiscoveredItems([]); // Clear after adding
       setMessage('监控目标已添加！');
       setTimeout(() => setMessage(''), 3000);
       fetchData();
     } catch (err) { alert(err.response?.data?.error || '添加失败'); }
     setLoading(false);
+  };
+
+  const scanPage = async () => {
+    if (!newSite.url) return alert('请输入目标网址');
+    setDiscovering(true);
+    try {
+      const res = await api.post('/discover', { url: newSite.url });
+      setDiscoveredItems(res.data.products);
+      if (res.data.products.length === 0) setMessage('未在页面上发现明显商品');
+      else setMessage(`发现 ${res.data.products.length} 个可能的目标`);
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      alert('扫描失败：' + (err.response?.data?.error || err.message));
+    }
+    setDiscovering(false);
+  };
+
+  const selectProduct = (p) => {
+    setNewSite({
+      ...newSite,
+      name: p.name,
+      // If the product has a specific URL, we use it, otherwise keep the scan URL
+      url: p.url && p.url.startsWith('http') ? p.url : newSite.url 
+    });
   };
 
   const deleteSite = async (id) => {
@@ -230,10 +257,33 @@ export default function App() {
                   <input className="input-field" type="url" placeholder="https://..." required
                     value={newSite.url} onChange={e => setNewSite({...newSite, url: e.target.value})} />
                 </div>
-                <button type="submit" className="btn-primary" disabled={loading}>
-                  {loading ? <span className="spin" style={{display:'inline-block'}}>⟳</span> : '🚀'} 激活探测器
-                </button>
+                <div className="form-actions" style={{display:'flex',gap:8,marginTop:12}}>
+                  <button type="button" className="btn-secondary" onClick={scanPage} disabled={discovering || !newSite.url} style={{flex:1}}>
+                    {discovering ? <span className="spin">⟳</span> : '🔍'} 扫描商品
+                  </button>
+                  <button type="submit" className="btn-primary" disabled={loading} style={{flex:1.5}}>
+                    {loading ? <span className="spin">⟳</span> : '🚀'} 激活探测器
+                  </button>
+                </div>
               </form>
+
+              {discoveredItems.length > 0 && (
+                <div className="discovery-results" style={{marginTop:20, borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:15}}>
+                  <label className="form-label" style={{display:'block', marginBottom:10}}>✨ 智能识别结果 (点击选择):</label>
+                  <div className="discovery-list" style={{maxHeight:300, overflowY:'auto', display:'flex', flexDirection:'column', gap:8}}>
+                    {discoveredItems.map((p, idx) => (
+                      <div key={idx} className="discovery-item glass-card" onClick={() => selectProduct(p)} 
+                        style={{padding:'10px', fontSize:13, cursor:'pointer', transition:'transform 0.2s', border:'1px solid rgba(255,255,255,0.05)'}}>
+                        <div style={{fontWeight:'bold', color:'var(--primary)', marginBottom:4}}>{p.name}</div>
+                        <div style={{display:'flex', justifyContent:'space-between', opacity:0.8}}>
+                          <span>💰 {p.price}</span>
+                          {p.image && <span title="包含图片">🖼️</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
