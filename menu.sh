@@ -191,7 +191,7 @@ while true; do
             echo -e "${BLUE}  [3/4] 安装客户端依赖...${NC}"
             cd "$SCRIPT_DIR/client"
             rm -rf node_modules package-lock.json
-            npm install 2>&1 | tail -3
+            npm install --legacy-peer-deps 2>&1 | tail -3
             echo -e "${GREEN}  ✓ 客户端依赖安装完成${NC}"
 
             # 启动服务
@@ -217,19 +217,18 @@ while true; do
             echo ""
 
             # 自动显示登录信息
-            local USER=$(get_setting "admin_user")
-            local PASS=$(get_setting "admin_pass")
-            local PATH_SUB=$(get_setting "access_path")
-            local TOKEN=$(get_setting "reg_token")
-            local IP
-            IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
+            SHOW_USER=$(get_setting "admin_user")
+            SHOW_PASS=$(get_setting "admin_pass")
+            SHOW_PATH=$(get_setting "access_path")
+            SHOW_TOKEN=$(get_setting "reg_token")
+            SHOW_IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
 
             echo -e "  ${BOLD}${YELLOW}══════════ 安装完成！以下是你的登录信息 ══════════${NC}"
             echo ""
-            echo -e "  ${BOLD}${BLUE}  面板地址  :${NC} ${YELLOW}http://$IP:5173/console-$PATH_SUB${NC}"
-            echo -e "  ${BOLD}${BLUE}  用户名    :${NC} ${GREEN}$USER${NC}"
-            echo -e "  ${BOLD}${BLUE}  登录密码  :${NC} ${RED}$PASS${NC}"
-            echo -e "  ${BOLD}${BLUE}  令牌      :${NC} $TOKEN"
+            echo -e "  ${BOLD}${BLUE}  面板地址  :${NC} ${YELLOW}http://$SHOW_IP:5173/console-$SHOW_PATH${NC}"
+            echo -e "  ${BOLD}${BLUE}  用户名    :${NC} ${GREEN}$SHOW_USER${NC}"
+            echo -e "  ${BOLD}${BLUE}  登录密码  :${NC} ${RED}$SHOW_PASS${NC}"
+            echo -e "  ${BOLD}${BLUE}  令牌      :${NC} $SHOW_TOKEN"
             echo ""
             echo -e "  ${YELLOW}  使用 './menu.sh' 可随时管理系统${NC}"
             echo -e "  ${BOLD}${YELLOW}══════════════════════════════════════════════════${NC}"
@@ -240,7 +239,7 @@ while true; do
             echo -e "${YELLOW}  正在从 GitHub 拉取最新版本...${NC}"
             git -C "$SCRIPT_DIR" pull
             (cd "$SERVER_DIR" && npm install)
-            (cd "$SCRIPT_DIR/client" && npm install)
+            (cd "$SCRIPT_DIR/client" && npm install --legacy-peer-deps)
             echo -e "${GREEN}  升级完成！${NC}"
             systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo -e "${YELLOW}  请手动重启服务。${NC}"
             sleep 3
