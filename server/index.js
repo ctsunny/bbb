@@ -157,7 +157,6 @@ app.post('/api/discover', auth, wrap(async (req, res) => {
 
 // ── Robust Static File Serving ──────────────────────────────────────────────
 const distPath = path.resolve(__dirname, '..', 'client', 'dist');
-console.log(`[Static] Serving from: ${distPath}`);
 
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) return next();
@@ -167,24 +166,23 @@ app.use((req, res, next) => {
   if (req.path === base) return res.redirect(base + '/');
   
   if (req.path.startsWith(base + '/')) {
-    // Correctly serve static files by removing the base prefix from the internal URL
-    const internalPath = req.path.substring(base.length);
-    if (internalPath === '/' || internalPath === '') {
-      return res.sendFile(path.join(distPath, 'index.html'));
+    const originalUrl = req.url;
+    // Strip base prefix for express.static
+    req.url = req.url.substring(base.length);
+    if (req.url === '' || req.url === '/') {
+      req.url = '/index.html';
     }
-    // Attempt to serve the file. If not found, fallback to index.html for SPA routing
-    return express.static(distPath)(
-      { ...req, url: internalPath }, 
-      res, 
-      () => res.sendFile(path.join(distPath, 'index.html'))
-    );
+    return express.static(distPath)(req, res, () => {
+      // If not a static file, serve index.html (SPA)
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
   }
   
-  res.status(403).send('<h1>403 Forbidden</h1><p>Invalid Access Path</p>');
+  res.status(403).send('<h1>403 Forbidden</h1><p>NanoMonitor Access Protocol Required</p>');
 });
 
 cron.schedule('* * * * *', () => runMonitor());
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`NanoMonitor ${VERSION} is active at http://0.0.0.0:${PORT}`);
+  console.log(`NanoMonitor v1.6.1 active at http://0.0.0.0:${PORT}`);
 });
