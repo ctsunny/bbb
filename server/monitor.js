@@ -2,13 +2,14 @@ const puppeteer = require('puppeteer');
 const db = require('./db');
 const { sendBarkNotification } = require('./notify');
 
-const VERSION = 'v1.6.3';
+const VERSION = 'v1.7.4';
 const MAX_CHANGES_PER_SITE = 20;
 
-// ── 噪音配置 ────────────────────────────────────────────────────────────
+// ── 噪音配置 (v1.7.4 精简) ───────────────────────────────────────────────────
 const IGNORE_TAGS = ['script', 'style', 'noscript', 'nav', 'footer', 'header', 'aside', 'iframe', 'svg', 'button', 'input', 'form'];
-const IGNORE_CLASSES_IDS = ['menu', 'nav', 'footer', 'aside', 'copyright', 'sidebar', 'popup', 'modal', 'advert', 'notice', 'breadcrumb', 'contact', 'customer'];
-const NOISE_KEYWORDS = ['版权', '备案', 'ICP备', '网安备', '联系我们', '举报', '关于我们', '投诉', '友情链接', '常见问题', '下载中心', '会员中心', '注册', '登录', '扫码关注', '微信', 'QQ', '服务条款', '隐私政策', '地址：', 'Copyright', 'All Rights Reserved'];
+// 移除 'notice' 等可能包含正文内容的关键词
+const IGNORE_CLASSES_IDS = ['menu', 'nav', 'footer', 'aside', 'copyright', 'sidebar', 'popup', 'modal', 'advert', 'breadcrumb', 'customer'];
+const NOISE_KEYWORDS = ['版权所有', '备案号', 'ICP备', '网安备', '关于我们', '投诉举报', '扫码关注', 'Copyright', 'All Rights Reserved'];
 
 const NOISE_LINE_RE = /^(\d{1,4}[:\-\/]\d{2}|\d+\.?\d*\s*(件|个|条|次|人|分钟前|小时前|天前|秒前|评论|浏览|收藏|点赞|已售|库存|剩余|还剩|in stock|left|%|折))$/i;
 
@@ -21,40 +22,32 @@ const launchBrowser = () => puppeteer.launch({
   ] 
 });
 
-// ── 智能提取快照 (v1.6.3) ────────────────────────────────────────────────
+// ── 智能提取快照 (v1.7.4) ────────────────────────────────────────────────
 const extractSnapshot = async (page) => {
   return page.evaluate((IGNORE_TAGS, IGNORE_CLASSES_IDS, NOISE_KEYWORDS) => {
-    const lines = [];
+    let lines = [];
     const seen = new Set();
 
-    // 1. 预清理干扰元素
-    document.querySelectorAll(IGNORE_TAGS.join(',')).forEach(el => el.remove());
-    
-    // 2. 根据 Class/ID 清理冗余块 (footer, nav 等)
-    IGNORE_CLASSES_IDS.forEach(tag => {
-      document.querySelectorAll(`[class*="${tag}"], [id*="${tag}"]`).forEach(el => el.remove());
-    });
-
+    // 1. 深度遍历策略 (核心算法)
     const walk = (el) => {
-      if (!el || el.offsetParent === null) return; // 跳过隐藏元素
+      // 过滤脚本样式和隐藏标签
+      if (!el || IGNORE_TAGS.includes(el.tagName?.toLowerCase())) return;
       
-      // 检查文本内容是否包含绝对噪音关键字
-      const text = el.innerText?.trim();
-      if (!text) return;
+      // 注意：不再检查 offsetParent，因为在某些动态加载场景下它会误判为 null
       
-      if (el.childElementCount === 0) {
-        const t = text.replace(/\s+/g, ' ').substring(0, 500);
-        
-        // 智能过滤
-        if (t.length < 4) return;
-        if (seen.has(t)) return;
-        
-        // 判定噪音
-        const isNoise = NOISE_KEYWORDS.some(k => t.includes(k));
-        if (isNoise) return;
+      // 命中黑名单 Class/ID 的容器直接斩断
+      const idCls = (el.id + el.className).toLowerCase();
+      if (IGNORE_CLASSES_IDS.some(tag => idCls.includes(tag))) return;
 
-        seen.add(t);
-        lines.push(t);
+      if (el.childElementCount === 0) {
+        const text = el.innerText?.replace(/\s+/g, ' ').trim();
+        if (!text || text.length < 3 || seen.has(text)) return;
+        
+        // 判定噪音关键词
+        if (NOISE_KEYWORDS.some(k => text.includes(k))) return;
+
+        seen.add(text);
+        lines.push(text);
       } else {
         for (const child of el.children) walk(child);
       }
@@ -62,12 +55,19 @@ const extractSnapshot = async (page) => {
 
     walk(document.body);
     
-    // 3. 后期精简：如果一行字包含大量标点或看起来像菜单，剔除
+    // 2. 兜底策略：如果智能算法完全没抓到东西，说明 DOM 结构可能太坑，直接退回到全量内容
+    if (lines.length < 5) {
+      const raw = document.body.innerText.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 5 && !seen.has(l));
+      lines = lines.concat(raw);
+    }
+    
+    // 3. 内容精简
     return lines.filter(l => {
-      // 过滤掉包含过多连续分割符的菜单行
       if (l.split('|').length > 5) return false;
-      // 太长的无价格无意义段落可能是纯粹的文章废话，但放宽到 200 字符
-      if (l.length > 200 && !l.includes('￥') && !l.includes('$')) return false; 
+      // 段落长度保护：250 字符
+      if (l.length > 250 && !l.includes('￥') && !l.includes('$')) return false; 
       return true;
     }).slice(0, 300);
   }, IGNORE_TAGS, IGNORE_CLASSES_IDS, NOISE_KEYWORDS);
@@ -76,7 +76,7 @@ const extractSnapshot = async (page) => {
 // ── 噪音行识别 (变动检测时使用) ──────────────────────────────────────────
 const isNoiseLine = (line) => {
   const t = line.trim();
-  if (/^\d+$/.test(t)) return true; // 纯数字通常是 ID 或浏览量
+  if (/^\d+$/.test(t)) return true;
   if (/\d+\s*(分钟|小时|天|秒)前/.test(t)) return true;
   if (NOISE_LINE_RE.test(t)) return true;
   return false;
@@ -105,40 +105,27 @@ const checkSite = async (site) => {
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
 
-    // 导航降级策略
     try {
       await page.goto(site.url, { waitUntil: 'networkidle2', timeout: 30000 });
     } catch {
       await page.goto(site.url, { waitUntil: 'domcontentloaded', timeout: 20000 });
     }
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 3000)); // 增加等待时间让渲染完成
 
-    let currentLines;
-    try {
-      currentLines = await extractSnapshot(page);
-    } catch (e) {
-      await new Promise(r => setTimeout(r, 2000));
-      currentLines = await extractSnapshot(page);
-    }
-    
+    let currentLines = await extractSnapshot(page);
     const currentContent = JSON.stringify(currentLines);
 
     if (site.last_content && site.last_content !== currentContent) {
       const oldLines = JSON.parse(site.last_content);
       const { added, removed } = smartDiff(oldLines, currentLines);
-
-      // 决定是否记录
       const significant = added.length > 0 || removed.length > 0;
       if (significant) {
         const summary = buildSummary(site.name, added, removed);
         db.prepare('INSERT INTO changes (site_id, diff_summary) VALUES (?, ?)')
           .run(site.id, summary);
-        
-        // 剪枝
         db.prepare('DELETE FROM changes WHERE site_id = ? AND id NOT IN (SELECT id FROM changes WHERE site_id = ? ORDER BY detected_at DESC LIMIT 20)')
           .run(site.id, site.id);
-
         await sendBarkNotification(`🔔 ${site.name}`, summary, site.url);
       }
     }
@@ -159,7 +146,7 @@ const runMonitor = async () => {
   const now = Date.now();
   for (const s of sites) {
     if (s.status === 'checking') continue;
-    const last = s.last_checked ? new Date(s.last_checked + 'Z').getTime() : 0;
+    const last = s.last_checked ? new Date(s.last_checked + (s.last_checked.endsWith('Z')?'':'Z')).getTime() : 0;
     if ((now - last) / 1000 < (s.interval || 60)) continue;
     await checkSite(s);
   }

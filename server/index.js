@@ -125,7 +125,9 @@ app.get('/api/snapshot/:id', auth, wrap((req, res) => {
   if (!site) return res.status(404).json({ error: 'Not found' });
   let lines = [];
   try { lines = JSON.parse(site.last_content || '[]'); } catch(e) {}
-  res.json({ name: site.name, url: site.url, last_checked: site.last_checked, lines });
+  // Ensure ISO format for frontend timeAgo
+  const last_checked_iso = site.last_checked ? (site.last_checked.replace(' ', 'T') + (site.last_checked.endsWith('Z') ? '' : 'Z')) : null;
+  res.json({ name: site.name, url: site.url, last_checked: last_checked_iso, lines });
 }));
 
 app.get('/api/changes', auth, wrap((req, res) => {
