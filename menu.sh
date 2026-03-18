@@ -168,38 +168,73 @@ while true; do
     
     case $opt in
         1)
-            echo -e "${YELLOW}  ⚙  正在安装 / 重新安装依赖...${NC}"
-            
-            # 安装 C++ 编译工具（better-sqlite3 原生模块必需）
-            echo -e "${BLUE}  → 安装系统编译工具 (build-essential, python3, make)...${NC}"
-            if command -v apt-get &>/dev/null; then
-                apt-get install -y python3 make g++ build-essential 2>&1 | tail -3
-            elif command -v yum &>/dev/null; then
-                yum install -y python3 make gcc-c++ 2>&1 | tail -3
-            fi
+            echo -e "${YELLOW}  ⚙  开始一键安装 NanoMonitor...${NC}"
+            echo ""
 
-            # 清理并重新编译服务端依赖（确保原生模块在当前平台正确编译）
-            echo -e "${BLUE}  → 编译安装服务端依赖...${NC}"
+            # 安装 C++ 编译工具
+            echo -e "${BLUE}  [1/4] 安装系统编译工具...${NC}"
+            if command -v apt-get &>/dev/null; then
+                apt-get install -y python3 make g++ build-essential 2>&1 | tail -2
+            elif command -v yum &>/dev/null; then
+                yum install -y python3 make gcc-c++ 2>&1 | tail -2
+            fi
+            echo -e "${GREEN}  ✓ 编译工具就绪${NC}"
+
+            # 安装服务端依赖
+            echo -e "${BLUE}  [2/4] 编译安装服务端依赖...${NC}"
             cd "$SERVER_DIR"
             rm -rf node_modules package-lock.json
-            npm install
-            
+            npm install 2>&1 | tail -3
+            echo -e "${GREEN}  ✓ 服务端依赖安装完成${NC}"
+
             # 安装客户端依赖
-            echo -e "${BLUE}  → 安装客户端依赖...${NC}"
+            echo -e "${BLUE}  [3/4] 安装客户端依赖...${NC}"
             cd "$SCRIPT_DIR/client"
             rm -rf node_modules package-lock.json
-            npm install
+            npm install 2>&1 | tail -3
+            echo -e "${GREEN}  ✓ 客户端依赖安装完成${NC}"
 
-            echo -e "${GREEN}  ✓ 所有依赖安装完成！${NC}"
-            echo ""
-            echo -e "${YELLOW}  正在初始化数据库...${NC}"
+            # 启动服务
+            echo -e "${BLUE}  [4/4] 初始化数据库并启动服务...${NC}"
             cd "$SCRIPT_DIR"
-            node "$SERVER_DIR/index.js" &
-            INIT_PID=$!
+
+            # 杀掉旧进程
+            pkill -f "node server/index.js" 2>/dev/null
+            pkill -f "vite" 2>/dev/null
+            sleep 1
+
+            # 启动后端
+            nohup node "$SERVER_DIR/index.js" > "$SERVER_DIR/server.log" 2>&1 &
+            BACKEND_PID=$!
             sleep 4
-            kill $INIT_PID 2>/dev/null
-            echo -e "${GREEN}  ✓ 数据库初始化完成，执行选项 3 查看面板地址。${NC}"
-            sleep 3
+
+            # 启动前端
+            nohup npx --prefix "$SCRIPT_DIR/client" vite --host 0.0.0.0 > "$SCRIPT_DIR/client/client.log" 2>&1 &
+            FRONTEND_PID=$!
+            sleep 4
+
+            echo -e "${GREEN}  ✓ 服务已全部启动！${NC}"
+            echo ""
+
+            # 自动显示登录信息
+            local USER=$(get_setting "admin_user")
+            local PASS=$(get_setting "admin_pass")
+            local PATH_SUB=$(get_setting "access_path")
+            local TOKEN=$(get_setting "reg_token")
+            local IP
+            IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
+
+            echo -e "  ${BOLD}${YELLOW}══════════ 安装完成！以下是你的登录信息 ══════════${NC}"
+            echo ""
+            echo -e "  ${BOLD}${BLUE}  面板地址  :${NC} ${YELLOW}http://$IP:5173/console-$PATH_SUB${NC}"
+            echo -e "  ${BOLD}${BLUE}  用户名    :${NC} ${GREEN}$USER${NC}"
+            echo -e "  ${BOLD}${BLUE}  登录密码  :${NC} ${RED}$PASS${NC}"
+            echo -e "  ${BOLD}${BLUE}  令牌      :${NC} $TOKEN"
+            echo ""
+            echo -e "  ${YELLOW}  使用 './menu.sh' 可随时管理系统${NC}"
+            echo -e "  ${BOLD}${YELLOW}══════════════════════════════════════════════════${NC}"
+            echo ""
+            read -p "  按任意键返回菜单..." -n1 -s
             ;;
         2)
             echo -e "${YELLOW}  正在从 GitHub 拉取最新版本...${NC}"
