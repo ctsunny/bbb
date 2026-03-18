@@ -213,7 +213,8 @@ export default function App() {
           <div className="header-logo">
             <span className="header-icon">🛰️</span>
             监控面板
-            <span style={{color:'var(--primary)',fontWeight:400,fontSize:18,fontStyle:'italic'}}>控制台</span>
+            <span style={{color:'var(--primary)',fontWeight:400,fontSize:18,fontStyle:'italic',marginRight:8}}>控制台</span>
+            <span className="badge badge-active" style={{verticalAlign:'middle',fontSize:10}}>v1.2.0</span>
           </div>
           <div className="header-sub">
             🛡️ <span>安全会话进行中</span>

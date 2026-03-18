@@ -148,7 +148,7 @@ const discoverProducts = async (url) => {
       if (items.length > 0) return items;
 
       // 2. Heuristic: Look for elements that look like price + text
-      const priceRegex = /([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?(元|\/月|起))/g;
+      const priceRegex = /([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?(元|\/月|起|Monthly|每月))/i;
       const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null, false);
       let node;
       const candidates = [];
@@ -159,20 +159,24 @@ const discoverProducts = async (url) => {
           if (priceRegex.test(node.textContent.trim())) isPrice = true;
         } else if (node.nodeType === Node.ELEMENT_NODE) {
           const className = (node.className || '').toString().toLowerCase();
-          if (className.includes('price') || className.includes('amount')) {
+          const id = (node.id || '').toString().toLowerCase();
+          if (className.includes('price') || className.includes('amount') || id.includes('price')) {
             isPrice = true;
           }
         }
 
         if (isPrice) {
           let parent = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-          // Look for container
-          for (let i = 0; i < 5; i++) {
+          // Look for container (usually a box containing name + price)
+          for (let i = 0; i < 6; i++) {
             if (!parent) break;
             const parentText = parent.innerText;
-            if (parentText.length > 10 && parentText.length < 500) {
-              candidates.push(parent);
-              break;
+            if (parentText.length > 10 && parentText.length < 800) {
+              // Priority: elements with headings or specific tags are better candidates
+              if (parent.querySelector('h1,h2,h3,h4,h5,h6,strong,b') || parent.className.includes('item') || parent.className.includes('product')) {
+                candidates.push(parent);
+                break;
+              }
             }
             parent = parent.parentElement;
           }
@@ -183,17 +187,18 @@ const discoverProducts = async (url) => {
       const seen = new Set();
       candidates.forEach(el => {
         const fullText = el.innerText.replace(/\s+/g, ' ').trim();
-        if (seen.has(fullText)) return;
+        if (seen.has(fullText) || fullText.length < 5) return;
         seen.add(fullText);
 
-        // Simple extraction
-        const lines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        const priceMatch = fullText.match(/([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?(元|\/月|起))/);
+        // Name extraction: try to find the boldest/largest text first
+        const heading = el.querySelector('h1,h2,h3,h4,h5,h6,strong,b');
+        const name = heading ? heading.innerText.trim() : fullText.split('\n')[0].substring(0, 100);
+        const priceMatch = fullText.match(/([￥$¥]\s?\d+(\.\d+)?|\d+(\.\d+)?\s?(元|\/月|起|Monthly|每月))/i);
         
         items.push({
-          name: lines[0] || 'Unknown',
+          name: name || 'Unknown Product',
           price: priceMatch ? priceMatch[0] : 'N/A',
-          text: fullText,
+          text: fullText.substring(0, 200),
           image: el.querySelector('img')?.src || ''
         });
       });
