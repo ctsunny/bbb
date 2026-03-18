@@ -214,7 +214,7 @@ export default function App() {
             <span className="header-icon">🛰️</span>
             监控面板
             <span style={{color:'var(--primary)',fontWeight:400,fontSize:18,fontStyle:'italic',marginRight:8}}>控制台</span>
-            <span className="badge badge-active" style={{verticalAlign:'middle',fontSize:10}}>v1.2.0</span>
+            <span className="badge badge-active" style={{verticalAlign:'middle',fontSize:10}}>v1.3.0</span>
           </div>
           <div className="header-sub">
             🛡️ <span>安全会话进行中</span>
@@ -332,9 +332,16 @@ export default function App() {
                           {site.last_checked && (
                             <span className="site-tag">🕒 {timeAgo(site.last_checked)}</span>
                           )}
-                          {site.status==='error' && <span className="badge badge-error">✕ 错误</span>}
+                          {site.status==='error' && (
+                            <span className="badge badge-error" title={site.error_message || '未知错误'}>✕ 错误</span>
+                          )}
                           {site.last_checked && site.status==='idle' && <span className="badge badge-active">● 正常</span>}
                         </div>
+                        {site.status==='error' && site.error_message && (
+                          <div style={{fontSize:11, color:'#f87171', marginTop:4, maxWidth:300, wordBreak:'break-all', opacity:0.85}}>
+                            ⚠️ {site.error_message.substring(0, 120)}{site.error_message.length > 120 ? '...' : ''}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="site-actions">
@@ -377,7 +384,7 @@ export default function App() {
         </div>
       </div>
 
-      <footer>&copy; 2026 NanoMonitor 高级集群监视系统 v1.2.0</footer>
+      <footer>&copy; 2026 NanoMonitor 高级集群监视系统 v1.3.0</footer>
     </div>
   );
 }

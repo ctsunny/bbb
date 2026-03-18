@@ -2,6 +2,8 @@ const puppeteer = require('puppeteer');
 const db = require('./db');
 const { sendBarkNotification } = require('./notify');
 
+const VERSION = 'v1.3.0';
+
 // ── Puppeteer 启动参数 ──────────────────────────────────────────
 const LAUNCH_ARGS = [
   '--no-sandbox',
@@ -50,13 +52,29 @@ const extractSnapshot = async (page) => {
   });
 };
 
+// ── 噪音行识别 —— 这些变化不触发警报 ───────────────────────────
+// 匹配：纯数字、时间戳、库存数、浏览量、评论数等频繁微变内容
+const NOISE_LINE_RE = /^(\d{1,4}[:\-\/]\d{2}|\d+\.?\d*\s*(件|个|条|次|人|分钟前|小时前|天前|秒前|评论|浏览|收藏|点赞|已售|库存|剩余|还剩|in stock|left))$/i;
+
+const isNoiseLine = (line) => {
+  const t = line.trim();
+  // 纯数字行
+  if (/^\d+$/.test(t)) return true;
+  // 时间相关
+  if (/\d+\s*(分钟|小时|天|秒)前/.test(t)) return true;
+  // 库存/数量相关
+  if (NOISE_LINE_RE.test(t)) return true;
+  return false;
+};
+
 // ── 计算智能 diff ───────────────────────────────────────────────
 const smartDiff = (oldLines, newLines) => {
   const oldSet = new Set(oldLines);
   const newSet = new Set(newLines);
 
-  const added   = newLines.filter(l => !oldSet.has(l));
-  const removed = oldLines.filter(l => !newSet.has(l));
+  // 过滤掉纯噪音行再做对比
+  const added   = newLines.filter(l => !oldSet.has(l) && !isNoiseLine(l));
+  const removed = oldLines.filter(l => !newSet.has(l) && !isNoiseLine(l));
 
   return { added, removed };
 };
@@ -109,7 +127,7 @@ const checkSite = async (site) => {
       const isNoise = added.length + removed.length < 2 &&
         added.concat(removed).every(l => /^\d{1,2}[:\-\/]\d{2}/.test(l) || l.length < 8);
 
-      if (!isNoise) {
+    if (!isNoise) {
         const diffSummary = buildSummary(site.name, added, removed);
         db.prepare('INSERT INTO changes (site_id, diff_summary, full_snapshot) VALUES (?, ?, ?)')
           .run(site.id, diffSummary, currentContent);
