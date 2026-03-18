@@ -1,0 +1,50 @@
+name: Build Node Application
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger build on any v-prefixed tag
+
+jobs:
+  build_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Build Frontend
+        working-directory: ./client
+        run: |
+          npm install
+          npm run build
+
+      - name: Prepare Release Package
+        run: |
+          mkdir -p release_package
+          # copy backend
+          cp -r server release_package/
+          # copy built frontend
+          mkdir -p release_package/client
+          cp -r client/dist release_package/client/
+          # copy config files
+          cp package.json package-lock.json release_package/
+
+      - name: Zip Release Artifact
+        working-directory: ./release_package
+        run: tar -czvf ../nanomonitor-linux-x64.tar.gz .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: nanomonitor-linux-x64.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
