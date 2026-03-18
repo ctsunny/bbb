@@ -2,60 +2,100 @@ const puppeteer = require('puppeteer');
 const db = require('./db');
 const { sendBarkNotification } = require('./notify');
 
+// Optimization 2: Common Product Selectors Cache
+const PRODUCT_SELECTORS = [
+  '[class*="product"]', '[class*="item"]', '[id*="product"]', '[id*="item"]', 
+  'article', 'li', 'section', '.price', '.amount'
+];
+
 const checkSite = async (site) => {
   let browser;
   try {
+    // Update status to checking
+    db.prepare('UPDATE sites SET status = ? WHERE id = ?').run('checking', site.id);
+
     browser = await puppeteer.launch({
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'] // Critical for Linux environments
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage', // Memory optimization for VPS
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu'
+      ]
     });
     
     const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36');
-    await page.goto(site.url, { waitUntil: 'networkidle2', timeout: 30000 });
-
-    // Extraction logic: find common product-like structures
-    const items = await page.evaluate(() => {
-      const results = [];
-      // Heuristic 1: Find elements with "price" or "product" in class/id
-      const candidates = document.querySelectorAll("[class*='product'], [class*='item'], [id*='product'], [id*='item'], article, li");
-      
-      candidates.forEach(el => {
-        const text = el.innerText.trim();
-        if (text.length > 5 && text.length < 500) {
-          // Look for price patterns ($ or ￥ or symbols)
-          if (/[\$\d\.,]{2,10}[元块]/.test(text) || /[\¥\d\.,]{2,10}/.test(text)) {
-             results.push(text.split('\n')[0]); // Take the first line as name
-          }
-        }
-      });
-      
-      // If we found nothing, let's just return key info
-      return results.length > 0 ? results : [document.body.innerText.substring(0, 500)];
+    
+    // Optimization 3: Resource Blocking (Save bandwidth/CPU)
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const type = req.resourceType();
+      if (['image', 'font', 'stylesheet', 'media'].includes(type) && !site.url.includes('api')) {
+        req.abort();
+      } else {
+        req.continue();
+      }
     });
 
-    const currentContent = JSON.stringify(items);
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36');
+    await page.goto(site.url, { waitUntil: 'networkidle2', timeout: 45000 });
+
+    // Optimization 4: Advanced Product Extraction (JSON-LD + Selectors)
+    const extractionResult = await page.evaluate((selectors) => {
+      const results = [];
+      
+      // Try JSON-LD first (most accurate for e-commerce)
+      const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+      scripts.forEach(s => {
+        try {
+          const data = JSON.parse(s.innerText);
+          if (data['@type'] === 'Product' || data['@type'] === 'Offer') {
+            results.push(`${data.name || 'Product'} - ${data.offers?.price || 'N/A'} ${data.offers?.priceCurrency || ''}`);
+          }
+        } catch(e) {}
+      });
+
+      if (results.length === 0) {
+        // Fallback to heuristic selectors
+        const candidates = document.querySelectorAll(selectors.join(','));
+        candidates.forEach(el => {
+          const text = el.innerText.trim();
+          if (text.length > 5 && text.length < 300) {
+             if (/[\$\d\.,]{2,10}/.test(text) || /[￥\d\.,]{2,10}/.test(text)) {
+                const cleanText = text.replace(/\s+/g, ' ');
+                if (!results.includes(cleanText)) results.push(cleanText);
+             }
+          }
+        });
+      }
+      
+      return results.length > 0 ? results : [document.body.innerText.substring(0, 1000)];
+    }, PRODUCT_SELECTORS);
+
+    const currentContent = JSON.stringify(extractionResult);
 
     if (site.last_content && site.last_content !== currentContent) {
       // Change detected!
-      console.log(`Change detected at ${site.url}`);
+      const oldArr = JSON.parse(site.last_content || "[]");
+      const newItems = extractionResult.filter(i => !oldArr.includes(i));
+      const removedItems = oldArr.filter(i => !extractionResult.includes(i));
       
-      // Calculate a simple diff (e.g. first 100 characters of change or just a message)
-      const diffSummary = `Changes detected on ${site.name || site.url}`;
+      const diffSummary = `Changed: ${newItems.length} new items, ${removedItems.length} removed. First change: ${newItems[0] || 'Unknown'}`;
       
-      // Store the change
-      db.prepare('INSERT INTO changes (site_id, diff) VALUES (?, ?)').run(site.id, 'Content changed');
+      db.prepare('INSERT INTO changes (site_id, diff_summary, full_snapshot) VALUES (?, ?, ?)')
+        .run(site.id, diffSummary, currentContent);
       
-      // Notify
-      await sendBarkNotification('Monitoring Alert', diffSummary, site.url);
+      await sendBarkNotification(`Target Update: ${site.name}`, diffSummary, site.url);
     }
 
-    // Update the site status
-    db.prepare('UPDATE sites SET last_content = ?, last_checked = CURRENT_TIMESTAMP WHERE id = ?')
-      .run(currentContent, site.id);
+    db.prepare('UPDATE sites SET last_content = ?, last_checked = CURRENT_TIMESTAMP, status = ?, error_message = NULL WHERE id = ?')
+      .run(currentContent, 'idle', site.id);
 
   } catch (error) {
     console.error(`Error checking ${site.url}:`, error.message);
+    db.prepare('UPDATE sites SET status = ?, error_message = ? WHERE id = ?')
+      .run('error', error.message, site.id);
   } finally {
     if (browser) await browser.close();
   }
@@ -64,6 +104,8 @@ const checkSite = async (site) => {
 const runMonitor = async () => {
   const activeSites = db.prepare('SELECT * FROM sites WHERE is_active = 1').all();
   for (const site of activeSites) {
+    // Skip if already checking to avoid overlap on slow sites
+    if (site.status === 'checking') continue;
     await checkSite(site);
   }
 };
