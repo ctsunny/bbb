@@ -24,15 +24,44 @@ update_setting() {
     node "$SERVER_DIR/set_setting.js" "$1" "$2" 2>/dev/null
 }
 
-# --- 检查依赖 ---
+# --- 检查并自动安装依赖 ---
 check_deps() {
+    # 检查 Node.js，不存在则自动安装
     if ! command -v node &>/dev/null; then
-        echo -e "${RED}错误：未找到 Node.js，请先安装: curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt install -y nodejs${NC}"
-        exit 1
+        echo -e "${YELLOW}  ⚙  未检测到 Node.js，正在自动安装（需要 root 权限）...${NC}"
+        
+        # 检测包管理器
+        if command -v apt-get &>/dev/null; then
+            echo -e "${BLUE}  → 检测到 Debian/Ubuntu 系统，使用 apt 安装...${NC}"
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 2>&1 | tail -5
+            apt-get install -y nodejs 2>&1 | tail -5
+        elif command -v yum &>/dev/null; then
+            echo -e "${BLUE}  → 检测到 CentOS/RHEL 系统，使用 yum 安装...${NC}"
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - 2>&1 | tail -5
+            yum install -y nodejs 2>&1 | tail -5
+        elif command -v dnf &>/dev/null; then
+            echo -e "${BLUE}  → 检测到 Fedora 系统，使用 dnf 安装...${NC}"
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - 2>&1 | tail -5
+            dnf install -y nodejs 2>&1 | tail -5
+        else
+            echo -e "${RED}  ✗ 无法自动识别包管理器，请手动安装 Node.js 20+：${NC}"
+            echo -e "${YELLOW}    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt install -y nodejs${NC}"
+            exit 1
+        fi
+
+        # 安装后再次验证
+        if ! command -v node &>/dev/null; then
+            echo -e "${RED}  ✗ Node.js 安装失败，请手动安装后重试。${NC}"
+            exit 1
+        fi
+        echo -e "${GREEN}  ✓ Node.js $(node -v) 安装完成！${NC}"
+        sleep 2
     fi
-    if [ ! -f "$SERVER_DIR/node_modules/.bin/_mocha" ] && [ ! -d "$SERVER_DIR/node_modules/better-sqlite3" ]; then
-        echo -e "${YELLOW}提示：依赖未安装，正在自动安装...${NC}"
-        (cd "$SERVER_DIR" && npm install)
+
+    # 检查服务端依赖
+    if [ ! -d "$SERVER_DIR/node_modules/better-sqlite3" ]; then
+        echo -e "${YELLOW}  ⚙  正在安装服务端依赖 (npm install)...${NC}"
+        (cd "$SERVER_DIR" && npm install --silent) && echo -e "${GREEN}  ✓ 服务端依赖安装完成${NC}"
     fi
 }
 
