@@ -7,7 +7,7 @@ const db      = require('./db');
 const { runMonitor, checkSite, discoverProducts } = require('./monitor');
 require('dotenv').config();
 
-const VERSION = 'v1.6.3';
+const VERSION = 'v1.7.2';
 const app     = express();
 const PORT    = process.env.PORT || 3001;
 
@@ -157,22 +157,30 @@ app.post('/api/discover', auth, wrap(async (req, res) => {
 // ── Robust Static File Serving ──────────────────────────────────────────────
 const distPath = path.resolve(__dirname, '..', 'client', 'dist');
 
+let cachedAccessPath = null;
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  const access = getSetting('access_path');
-  const base   = `/console-${access}`;
+  if (!cachedAccessPath) cachedAccessPath = getSetting('access_path');
+  const base   = `/console-${cachedAccessPath}`;
   
-  if (req.path === base) return res.redirect(base + '/');
+  if (req.path === base || req.path === base + '/') {
+    // Force trailing slash logic
+    if (req.path === base) return res.redirect(base + '/');
+    
+    // Serve index.html directly for the root of the console
+    return res.sendFile(path.join(distPath, 'index.html'));
+  }
   
   if (req.path.startsWith(base + '/')) {
-    const originalUrl = req.url;
     req.url = req.url.substring(base.length);
-    if (req.url === '' || req.url === '/') req.url = '/index.html';
+    if (req.url === '' || req.url === '/') {
+      return res.sendFile(path.join(distPath, 'index.html'));
+    }
     return express.static(distPath)(req, res, () => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-  res.status(403).send('<h1>403 Forbidden</h1><p>NanoMonitor Access Protocol Required</p>');
+  res.status(403).send('<h1>403 Forbidden</h1><p>NanoMonitor Access Protocol Required (' + req.path + ' rejected)</p>');
 });
 
 cron.schedule('* * * * *', () => runMonitor());
