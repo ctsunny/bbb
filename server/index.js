@@ -7,11 +7,11 @@ const db      = require('./db');
 const { runMonitor, checkSite } = require('./monitor');
 require('dotenv').config();
 
-const app           = express();
-const PORT          = process.env.PORT || 3001;
+const app            = express();
+const PORT           = process.env.PORT || 3001;
 const CHECK_INTERVAL = process.env.CHECK_INTERVAL || '*/1 * * * *';
 
-// ── 首次启动：写入默认安全配置 ──────────────────────────────
+// ── 初始化或修复数据库配置 ───────────────────────────────────────────────
 const ensureSettings = () => {
   if (!db.prepare('SELECT value FROM settings WHERE key = ?').get('admin_user')) {
     db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('admin_user', 'admin');
@@ -24,13 +24,8 @@ ensureSettings();
 
 const getSetting = (key) => db.prepare('SELECT value FROM settings WHERE key = ?').get(key)?.value;
 
-// ── Express 中间件 ────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
-
-// ── 静态前端文件（npm run build 产出的 dist） ─────────────
-const distPath = path.join(__dirname, '..', 'client', 'dist');
-app.use(express.static(distPath));
 
 // ── 认证中间件 ────────────────────────────────────────────
 const auth = (req, res, next) => {
@@ -101,7 +96,7 @@ app.get('/api/changes', auth, (req, res) => {
 
 app.post('/api/settings', auth, (req, res) => {
   const { bark_key } = req.body;
-  if (bark_key) {
+  if (bark_key !== undefined) {
     db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('bark_key', bark_key);
     res.json({ success: true });
   } else {
@@ -109,9 +104,33 @@ app.post('/api/settings', auth, (req, res) => {
   }
 });
 
-// ── SPA 回退：所有非 API 请求都返回 index.html ────────────
-app.get('*', (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+// ── 动态前端面板路由（带有安全路径防护） ─────────────
+const distPath = path.join(__dirname, '..', 'client', 'dist');
+
+app.use((req, res, next) => {
+  // 让 API 路由正常放行
+  if (req.path.startsWith('/api')) return next();
+
+  // 获取数据库中最新的访问路径
+  const access = getSetting('access_path');
+  const currentPath = `/console-${access}`;
+
+  // 严格匹配隐藏入口
+  if (req.path === currentPath) {
+    return res.redirect(currentPath + '/');
+  }
+
+  if (req.path.startsWith(currentPath + '/')) {
+    // 动态移除前缀，将后续路径交给静态文件服务器解析
+    req.url = req.url.replace(currentPath, ''); 
+    express.static(distPath)(req, res, () => {
+      // 找不到静态文件时，必定返回 index.html（单页应用特性）
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else {
+    // 任何错误的路径尝试直接无情拒绝（实现面板隐藏防护）
+    res.status(403).send('<h1>403 Forbidden</h1><p>Access Denied. 面板入口已被隐藏。</p>');
+  }
 });
 
 // ── 定时监控任务 ──────────────────────────────────────────

@@ -85,7 +85,7 @@ show_config() {
     IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
 
     echo ""
-    echo -e "${BOLD}${BLUE}  面板地址    :${NC} ${YELLOW}http://$IP:3001/${NC}"
+    echo -e "${BOLD}${BLUE}  面板地址    :${NC} ${YELLOW}http://$IP:3001/console-$PATH_SUB${NC}"
     echo -e "${BOLD}${BLUE}  用户名      :${NC} ${GREEN}$USER${NC}"
     echo -e "${BOLD}${BLUE}  登录密码    :${NC} ${RED}$PASS${NC}"
     echo -e "${BOLD}${BLUE}  注册 Token  :${NC} $TOKEN"
@@ -200,12 +200,14 @@ while true; do
             npm run build 2>&1 | tail -3
             echo -e "${GREEN}  ✓ 前端编译完成${NC}"
 
-            # 启动后端（同时提供前端文件）
+            # 彻底杀掉旧进程，释放 3001 端口
             echo -e "${BLUE}  [5/5] 启动服务...${NC}"
             cd "$SCRIPT_DIR"
-            pkill -f "node server/index.js" 2>/dev/null
+            fuser -k 3001/tcp 2>/dev/null
+            pkill -f "node.*index.js" 2>/dev/null
             pkill -f "vite" 2>/dev/null
-            sleep 1
+            sleep 2
+            
             nohup node "$SERVER_DIR/index.js" > "$SERVER_DIR/server.log" 2>&1 &
             sleep 4
 
@@ -221,7 +223,7 @@ while true; do
 
             echo -e "  ${BOLD}${YELLOW}══════════ 安装完成！以下是你的登录信息 ══════════${NC}"
             echo ""
-            echo -e "  ${BOLD}${BLUE}  面板地址  :${NC} ${YELLOW}http://$SHOW_IP:3001/${NC}"
+            echo -e "  ${BOLD}${BLUE}  面板地址  :${NC} ${YELLOW}http://$SHOW_IP:3001/console-$SHOW_PATH${NC}"
             echo -e "  ${BOLD}${BLUE}  用户名    :${NC} ${GREEN}$SHOW_USER${NC}"
             echo -e "  ${BOLD}${BLUE}  登录密码  :${NC} ${RED}$SHOW_PASS${NC}"
             echo -e "  ${BOLD}${BLUE}  令牌      :${NC} $SHOW_TOKEN"
@@ -237,7 +239,9 @@ while true; do
             (cd "$SERVER_DIR" && npm install)
             (cd "$SCRIPT_DIR/client" && npm install --legacy-peer-deps)
             echo -e "${GREEN}  升级完成！${NC}"
-            systemctl restart monitor 2>/dev/null || pm2 restart monitor 2>/dev/null || echo -e "${YELLOW}  请手动重启服务。${NC}"
+            fuser -k 3001/tcp 2>/dev/null
+            pkill -f "node.*index.js" 2>/dev/null
+            pm2 restart monitor 2>/dev/null || nohup node "$SERVER_DIR/index.js" > "$SERVER_DIR/server.log" 2>&1 &
             sleep 3
             ;;
         3) show_config ;;
@@ -253,9 +257,9 @@ while true; do
             ;;
         9)
             echo -e "${YELLOW}  正在重启监控服务...${NC}"
-            systemctl restart monitor 2>/dev/null || \
-            pm2 restart monitor 2>/dev/null || \
-            echo -e "${RED}  重启失败，服务可能未安装，请手动执行: node server/index.js${NC}"
+            fuser -k 3001/tcp 2>/dev/null
+            pkill -f "node.*index.js" 2>/dev/null
+            pm2 restart monitor 2>/dev/null || nohup node "$SERVER_DIR/index.js" > "$SERVER_DIR/server.log" 2>&1 &
             sleep 2
             ;;
         10)
