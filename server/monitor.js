@@ -112,12 +112,32 @@ const checkSite = async (site) => {
       }
     });
 
-    await page.goto(site.url, { waitUntil: 'networkidle2', timeout: 45000 });
+    // 先尝试 networkidle2，超时则降级为 domcontentloaded
+    try {
+      await page.goto(site.url, { waitUntil: 'networkidle2', timeout: 30000 });
+    } catch (navErr) {
+      if (navErr.message.includes('timeout')) {
+        await page.goto(site.url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      } else {
+        throw navErr;
+      }
+    }
 
-    // 等待页面主体内容稳定（给动态渲染多一点时间）
-    await new Promise(r => setTimeout(r, 1500));
+    // 等页面稳定
+    await new Promise(r => setTimeout(r, 2000));
 
-    const currentLines = await extractSnapshot(page);
+    // 提取快照（如果页面跳转导致 Frame 失效，重试一次）
+    let currentLines;
+    try {
+      currentLines = await extractSnapshot(page);
+    } catch (evalErr) {
+      if (evalErr.message.includes('detached') || evalErr.message.includes('Execution context')) {
+        await new Promise(r => setTimeout(r, 2000));
+        currentLines = await extractSnapshot(page);
+      } else {
+        throw evalErr;
+      }
+    }
     const currentContent = JSON.stringify(currentLines);
 
     if (site.last_content && site.last_content !== currentContent) {
