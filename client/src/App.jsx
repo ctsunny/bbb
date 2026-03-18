@@ -2,7 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const API_BASE = '/api';
-const VERSION  = 'v1.5.3';
+const VERSION  = 'v1.5.4';
+
+window.addEventListener('error', e => {
+  if (e.message.indexOf('ResizeObserver') === -1) { // Ignore harmless ResizeObserver noise
+    alert('JS崩溃: ' + e.message + ' at ' + e.filename + ':' + e.lineno);
+  }
+});
 
 const timeAgo = (dt) => {
   if (!dt) return '从未';
