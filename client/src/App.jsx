@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const API_BASE = '/api';
-const VERSION  = 'v1.5.0';
+const VERSION  = 'v1.5.1';
 
 const timeAgo = (dt) => {
   if (!dt) return '从未';

@@ -46,8 +46,8 @@ migrate("ALTER TABLE sites   ADD COLUMN status        TEXT    DEFAULT 'idle'");
 migrate("ALTER TABLE sites   ADD COLUMN error_message TEXT");
 migrate("ALTER TABLE sites   ADD COLUMN interval      INTEGER DEFAULT 60");
 migrate("ALTER TABLE sites   ADD COLUMN is_active     INTEGER DEFAULT 1");
+migrate("ALTER TABLE sites   ADD COLUMN created_at    DATETIME DEFAULT CURRENT_TIMESTAMP");
 migrate("ALTER TABLE changes ADD COLUMN diff_summary  TEXT");
-// 旧版有 full_snapshot 列但我们已不再需要大快照，保留字段避免报错
 migrate("ALTER TABLE changes ADD COLUMN full_snapshot TEXT");
 
 module.exports = db;
