@@ -2,12 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const API_BASE = '/api';
-const VERSION  = 'v1.5.1';
+const VERSION  = 'v1.5.2';
 
 const timeAgo = (dt) => {
   if (!dt) return '从未';
-  const diff = Date.now() - new Date(dt).getTime();
+  const d = new Date(dt);
+  if (isNaN(d.getTime())) return '未知';
+  const diff = Date.now() - d.getTime();
   const s = Math.floor(diff / 1000);
+  if (s < 0)   return '刚刚';
   if (s < 60)  return `${s} 秒前`;
   const m = Math.floor(s / 60);
   if (m < 60)  return `${m} 分钟前`;
@@ -58,12 +61,12 @@ export default function App() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [s, c, cfg] = await Promise.all([
-        api.get('/sites'), api.get('/changes'), api.get('/config'),
-      ]);
-      setSites(s.data.sites);
-      setChanges(c.data.changes);
-      setBarkKey(cfg.data.bark_key || '');
+      const { data: s } = await api.get('/sites');
+      const { data: c } = await api.get('/changes');
+      const { data: cfg } = await api.get('/config');
+      setSites(s?.sites || []);
+      setChanges(c?.changes || []);
+      setBarkKey(cfg?.bark_key || '');
     } catch(e) { console.error('Fetch Error:', e); }
   }, []);
 
@@ -116,8 +119,8 @@ export default function App() {
     setDiscovering(true);
     try {
       const res = await api.post('/discover', { url: newSite.url });
-      setDiscoveredItems(res.data.products);
-      flash(res.data.products.length > 0
+      setDiscoveredItems(res.data.products || []);
+      flash(res.data.products?.length > 0
         ? `✨ 发现 ${res.data.products.length} 个目标` : '⚠️ 未发现商品');
     } catch (err) { alert('扫描失败：' + (err.response?.data?.error || err.message)); }
     setDiscovering(false);
@@ -170,13 +173,6 @@ export default function App() {
     } catch (err) { alert('更新失败：' + (err.response?.data?.error || err.message)); }
   };
 
-  // Group changes by site
-  const groups = changes.reduce((acc, c) => {
-    if (!acc[c.site_id]) acc[c.site_id] = { name: c.site_name, url: c.site_url, items: [] };
-    acc[c.site_id].items.push(c);
-    return acc;
-  }, {});
-
   /* ──────────── 登录页 ──────────── */
   if (!isLoggedIn) return (
     <div className="login-page">
@@ -202,6 +198,13 @@ export default function App() {
       </div>
     </div>
   );
+
+  // Group changes by site (only calc if logged in)
+  const groups = (changes || []).reduce((acc, c) => {
+    if (!acc[c.site_id]) acc[c.site_id] = { name: c.site_name, url: c.site_url, items: [] };
+    acc[c.site_id].items.push(c);
+    return acc;
+  }, {});
 
   /* ──────────── 快照弹窗 ──────────── */
   const SnapshotModal = snapshot ? (
@@ -264,7 +267,6 @@ export default function App() {
       {message && <div className="message-bar">{message}</div>}
 
       <div className="main-grid">
-        {/* ── 左侧 ── */}
         <div className="sidebar">
           <div className="glass-card">
             <div className="card-header"><div className="card-header-title">➕ 新增探测目标</div></div>
@@ -326,9 +328,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── 右侧 ── */}
         <div className="content">
-          {/* 监控列表 */}
           <div className="glass-card">
             <div className="card-header">
               <div className="card-header-title">🌍 监视中的资产 ({sites.length})</div>
@@ -350,7 +350,6 @@ export default function App() {
                           {site.url}
                         </span>
                         <div className="site-tags">
-                          {/* 可编辑间隔 */}
                           {editInterval[site.id] !== undefined ? (
                             <span style={{display:'flex', alignItems:'center', gap:4}}>
                               <input type="number" min="10" style={{width:55, padding:'2px 4px', fontSize:10,
@@ -393,7 +392,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 变动历史：按站点分组 */}
           <div className="glass-card">
             <div className="card-header">
               <div className="card-header-title">🔔 变动警报 Feed</div>
