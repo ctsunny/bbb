@@ -76,8 +76,9 @@ export default function App() {
   useEffect(() => {
     const storedToken = localStorage.getItem('access_token');
     if (storedToken) {
-      // Must set the header manually for this very first check since the token effect might not have run
-      api.get(`/sites`, { headers: { Authorization: storedToken } })
+      // Set the default header synchronously so immediate subsequent requests don't fail
+      api.defaults.headers.common['Authorization'] = storedToken;
+      api.get(`/sites`)
         .then(() => {
           setToken(storedToken);
           setIsLoggedIn(true);
@@ -375,7 +376,7 @@ export default function App() {
         </div>
       </div>
 
-      <footer>&copy; 2026 NanoMonitor 高级集群监视系统</footer>
+      <footer>&copy; 2026 NanoMonitor 高级集群监视系统 v1.2.0</footer>
     </div>
   );
 }

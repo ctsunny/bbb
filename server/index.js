@@ -144,5 +144,5 @@ app.use((req, res, next) => {
 cron.schedule(CHECK_INTERVAL, () => runMonitor());
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`NanoMonitor running → http://0.0.0.0:${PORT}`);
+  console.log(`NanoMonitor v1.2.0 running → http://0.0.0.0:${PORT}`);
 });
