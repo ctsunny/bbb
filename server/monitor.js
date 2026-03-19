@@ -5,6 +5,31 @@ const { sendBarkNotification } = require('./notify');
 const VERSION = 'v1.7.4';
 const MAX_CHANGES_PER_SITE = 20;
 
+// ── 浏览器实例池 (修复资源泄漏) ───────────────────────────────────────────────
+let browserPool = null;
+let browserLock = false;
+
+const getBrowser = async () => {
+  if (browserPool && browserPool.isConnected()) {
+    return browserPool;
+  }
+  browserLock = true;
+  browserPool = await launchBrowser();
+  browserLock = false;
+  return browserPool;
+};
+
+const closeBrowser = async () => {
+  if (browserPool && browserPool.isConnected()) {
+    try {
+      await browserPool.close();
+    } catch (e) {
+      console.error('[Browser Close Error]', e.message);
+    }
+    browserPool = null;
+  }
+};
+
 // ── 噪音配置 (v1.7.4 精简) ───────────────────────────────────────────────────
 const IGNORE_TAGS = ['script', 'style', 'noscript', 'nav', 'footer', 'header', 'aside', 'iframe', 'svg', 'button', 'input', 'form'];
 // 移除 'notice' 等可能包含正文内容的关键词
@@ -99,10 +124,11 @@ const buildSummary = (siteName, added, removed) => {
 
 const checkSite = async (site) => {
   let browser;
+  let page;
   try {
     db.prepare('UPDATE sites SET status = ? WHERE id = ?').run('checking', site.id);
-    browser = await launchBrowser();
-    const page = await browser.newPage();
+    browser = await getBrowser();
+    page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
 
     try {
@@ -111,7 +137,7 @@ const checkSite = async (site) => {
       await page.goto(site.url, { waitUntil: 'domcontentloaded', timeout: 20000 });
     }
 
-    await new Promise(r => setTimeout(r, 3000)); // 增加等待时间让渲染完成
+    await new Promise(r => setTimeout(r, 3000));
 
     let currentLines = await extractSnapshot(page);
     const currentContent = JSON.stringify(currentLines);
@@ -137,26 +163,49 @@ const checkSite = async (site) => {
     db.prepare('UPDATE sites SET status = ?, error_message = ? WHERE id = ?')
       .run('error', error.message.substring(0, 300), site.id);
   } finally {
-    if (browser) await browser.close();
+    if (page) await page.close();
   }
 };
 
 const runMonitor = async () => {
-  const sites = db.prepare("SELECT * FROM sites WHERE is_active = 1").all();
-  const now = Date.now();
-  for (const s of sites) {
-    if (s.status === 'checking') continue;
-    const last = s.last_checked ? new Date(s.last_checked + (s.last_checked.endsWith('Z')?'':'Z')).getTime() : 0;
-    if ((now - last) / 1000 < (s.interval || 60)) continue;
-    await checkSite(s);
+  // 防重叠锁：如果已有任务在运行，直接跳过
+  if (runMonitor.isRunning) {
+    console.log('[Monitor] Previous run still in progress, skipping...');
+    return;
+  }
+  
+  runMonitor.isRunning = true;
+  try {
+    const sites = db.prepare("SELECT * FROM sites WHERE is_active = 1").all();
+    const now = Date.now();
+    for (const s of sites) {
+      if (s.status === 'checking') continue;
+      // 修复时间戳解析：统一处理 ISO 格式
+      let lastTime = 0;
+      if (s.last_checked) {
+        const lc = s.last_checked;
+        // 确保是有效的 ISO 格式
+        const isoString = lc.endsWith('Z') ? lc : lc + 'Z';
+        lastTime = new Date(isoString).getTime();
+        if (isNaN(lastTime)) {
+          console.warn(`[Monitor] Invalid timestamp for site ${s.id}: ${lc}`);
+          lastTime = 0;
+        }
+      }
+      if ((now - lastTime) / 1000 < (s.interval || 60)) continue;
+      await checkSite(s);
+    }
+  } finally {
+    runMonitor.isRunning = false;
   }
 };
 
 const discoverProducts = async (url) => {
   let browser;
+  let page;
   try {
-    browser = await launchBrowser();
-    const page = await browser.newPage();
+    browser = await getBrowser();
+    page = await browser.newPage();
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 });
     return await page.evaluate(() => {
       const items = [];
@@ -174,7 +223,7 @@ const discoverProducts = async (url) => {
       return items.slice(0, 20);
     });
   } catch { return []; }
-  finally { if (browser) await browser.close(); }
+  finally { if (page) await page.close(); }
 };
 
 module.exports = { runMonitor, checkSite, discoverProducts };
