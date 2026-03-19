@@ -1,15 +1,18 @@
 #!/bin/bash
 
-# Shopping Monitor Launch Script (Linux)
+# NanoMonitor 启动脚本
+# 用途：作为 systemd 服务的入口，启动 Node.js 应用
 
-echo "Starting Monitoring System..."
+set -e
 
-# Start Backend
-cd server
-npm start &
-echo "✓ Backend started on http://localhost:3001"
+INSTALL_DIR="/opt/nanomon"
+DATA_DIR="${DATA_DIR:-/var/lib/nanomon}"
 
-# Start Frontend
-cd ../client
-npm run dev
-echo "✓ Frontend started"
+cd "$INSTALL_DIR"
+
+# 设置环境变量
+export NODE_ENV=production
+export DATA_DIR="$DATA_DIR"
+
+# 启动应用 (假设主程序是 app.js 或 server.js)
+exec node app.js
