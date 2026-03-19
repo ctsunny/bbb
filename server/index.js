@@ -7,7 +7,7 @@ const db      = require('./db');
 const { runMonitor, checkSite, discoverProducts } = require('./monitor');
 require('dotenv').config();
 
-const VERSION = 'v1.7.3';
+const VERSION = 'v1.7.4';
 const app     = express();
 const PORT    = process.env.PORT || 3001;
 
@@ -88,6 +88,33 @@ app.get('/api/sites', auth, wrap((req, res) => {
 
 app.post('/api/sites', auth, wrap((req, res) => {
   const { url, name, interval } = req.body;
+  
+  // URL 验证：防止 SSRF 和无效 URL
+  let validUrl;
+  try {
+    validUrl = new URL(url);
+    if (!['http:', 'https:'].includes(validUrl.protocol)) {
+      return res.status(400).json({ error: '只支持 HTTP/HTTPS 协议' });
+    }
+    // 阻止内网地址
+    const hostname = validUrl.hostname;
+    if (hostname === 'localhost' || 
+        hostname === '127.0.0.1' || 
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('172.16.') ||
+        hostname.startsWith('172.17.') ||
+        hostname.startsWith('172.18.') ||
+        hostname.startsWith('172.19.') ||
+        hostname.startsWith('172.2') ||
+        hostname.startsWith('172.30.') ||
+        hostname.startsWith('172.31.')) {
+      return res.status(400).json({ error: '不允许访问内网地址' });
+    }
+  } catch {
+    return res.status(400).json({ error: '无效的 URL 格式' });
+  }
+  
   const existing = safeGet('SELECT id FROM sites WHERE url = ?', url);
   if (existing) {
     safeRun('UPDATE sites SET name = ?, interval = ?, is_active = 1 WHERE id = ?', 
@@ -137,7 +164,21 @@ app.get('/api/changes', auth, wrap((req, res) => {
      FROM changes LEFT JOIN sites ON changes.site_id = sites.id
      ORDER BY changes.detected_at DESC LIMIT 300`
   );
-  res.json({ changes });
+  // XSS 防护：转义 diff_summary 中的 HTML 特殊字符
+  const escapeHtml = (text) => {
+    if (!text) return text;
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+  const sanitizedChanges = changes.map(c => ({
+    ...c,
+    diff_summary: escapeHtml(c.diff_summary)
+  }));
+  res.json({ changes: sanitizedChanges });
 }));
 
 app.delete('/api/changes/:siteId', auth, wrap((req, res) => {
@@ -152,7 +193,34 @@ app.post('/api/settings', auth, wrap((req, res) => {
 }));
 
 app.post('/api/discover', auth, wrap(async (req, res) => {
-  const products = await discoverProducts(req.body.url);
+  const { url } = req.body;
+  
+  // URL 验证：防止 SSRF
+  let validUrl;
+  try {
+    validUrl = new URL(url);
+    if (!['http:', 'https:'].includes(validUrl.protocol)) {
+      return res.status(400).json({ error: '只支持 HTTP/HTTPS 协议' });
+    }
+    const hostname = validUrl.hostname;
+    if (hostname === 'localhost' || 
+        hostname === '127.0.0.1' || 
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('172.16.') ||
+        hostname.startsWith('172.17.') ||
+        hostname.startsWith('172.18.') ||
+        hostname.startsWith('172.19.') ||
+        hostname.startsWith('172.2') ||
+        hostname.startsWith('172.30.') ||
+        hostname.startsWith('172.31.')) {
+      return res.status(400).json({ error: '不允许访问内网地址' });
+    }
+  } catch {
+    return res.status(400).json({ error: '无效的 URL 格式' });
+  }
+  
+  const products = await discoverProducts(url);
   res.json({ products });
 }));
 
@@ -185,7 +253,59 @@ app.use((req, res, next) => {
   res.status(403).send('<h1>403 Forbidden</h1><p>NanoMonitor Access Protocol Required (' + req.path + ' rejected)</p>');
 });
 
+// 速率限制中间件 (简单实现)
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 分钟
+const RATE_LIMIT_MAX = 30; // 最多 30 次请求
+
+const rateLimit = (req, res, next) => {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  
+  if (!rateLimitMap.has(ip)) {
+    rateLimitMap.set(ip, { count: 1, startTime: now });
+    return next();
+  }
+  
+  const record = rateLimitMap.get(ip);
+  if (now - record.startTime > RATE_LIMIT_WINDOW) {
+    record.count = 1;
+    record.startTime = now;
+    return next();
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX) {
+    return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+  }
+  
+  record.count++;
+  next();
+};
+
+// 对 API 路由应用速率限制
+app.use('/api', rateLimit);
+
 cron.schedule('* * * * *', () => runMonitor());
+
+// 优雅关闭：清理浏览器实例和数据库连接
+const gracefulShutdown = async (signal) => {
+  console.log(`\n收到 ${signal} 信号，正在优雅关闭...`);
+  
+  const { closeBrowser } = require('./monitor');
+  await closeBrowser();
+  
+  try {
+    db.close();
+    console.log('数据库连接已关闭');
+  } catch (e) {
+    console.error('关闭数据库时出错:', e.message);
+  }
+  
+  process.exit(0);
+};
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 app.listen(PORT, '0.0.0.0', () => {
   const access = getSetting('access_path');
