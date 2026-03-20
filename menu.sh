@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# NanoMonitor 管理菜单脚本 (v1.7.9)
+# NanoMonitor 管理菜单脚本 (v1.8.4)
 # 极简设计：一键升级、重启、查看日志、重置密码、卸载
 
 INSTALL_DIR="/opt/nanomon"
@@ -12,7 +12,7 @@ BRANCH="main"
 show_menu() {
     clear
     echo "========================================"
-    echo "   NanoMonitor 管理菜单 (v1.7.9)"
+    echo "   NanoMonitor 管理菜单 (v1.8.4)"
     echo "========================================"
     echo "1. 🔄 一键升级到最新版本"
     echo "2. 🔄 重启服务"
