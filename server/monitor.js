@@ -226,4 +226,4 @@ const discoverProducts = async (url) => {
   finally { if (page) await page.close(); }
 };
 
-module.exports = { runMonitor, checkSite, discoverProducts };
+module.exports = { runMonitor, checkSite, discoverProducts, closeBrowser };

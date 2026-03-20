@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# NanoMonitor 一键安装脚本 (v1.7.4)
+# NanoMonitor 一键安装脚本 (v1.7.9)
 # 极简设计：一行命令安装，自动显示登录信息
 # 管理命令：nanomon
 
@@ -22,7 +22,7 @@ REPO_URL="https://github.com/ctsunny/bbb.git"
 BRANCH="main"
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${BLUE}   NanoMonitor 一键安装脚本 (v1.7.4)   ${NC}"
+echo -e "${BLUE}   NanoMonitor 一键安装脚本 (v1.7.9)   ${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
 
@@ -34,14 +34,14 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # 1. 安装系统依赖
-echo -e "${YELLOW}[1/4] 安装系统依赖...${NC}"
+echo -e "${YELLOW}[1/5] 安装系统依赖...${NC}"
 if command -v apt-get &> /dev/null; then
     apt-get update -qq >/dev/null 2>&1
     apt-get install -y -qq curl wget git ca-certificates unzip \
         libgbm1 libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
         libdbus-1-3 libdrm2 libgtk-3-0 libnspr4 libnss3 libxkbcommon0 \
         libxrandr2 xdg-utils fonts-liberation libappindicator3-1 \
-        libnss3 lsb-release xdg-utils >/dev/null 2>&1 || true
+        lsb-release >/dev/null 2>&1 || true
     echo -e "  ✓ Debian/Ubuntu 依赖安装完成"
 elif command -v yum &> /dev/null; then
     yum install -y -q curl wget git ca-certificates unzip \
@@ -54,13 +54,36 @@ else
     exit 1
 fi
 
-# 2. 创建目录
-echo -e "${YELLOW}[2/4] 创建安装目录...${NC}"
+# 2. 安装 Node.js 20.x（如未安装或版本过低）
+echo -e "${YELLOW}[2/5] 检查 Node.js 环境...${NC}"
+NODE_OK=false
+if command -v node &> /dev/null; then
+    NODE_VER=$(node -e "process.stdout.write(process.version)" 2>/dev/null || echo "v0")
+    NODE_MAJOR=$(echo "$NODE_VER" | tr -d 'v' | cut -d. -f1)
+    if [ "$NODE_MAJOR" -ge 18 ] 2>/dev/null; then
+        echo -e "  ✓ Node.js ${NODE_VER} 已满足要求"
+        NODE_OK=true
+    fi
+fi
+if [ "$NODE_OK" = false ]; then
+    echo -e "  ${CYAN}安装 Node.js 20.x...${NC}"
+    if command -v apt-get &> /dev/null; then
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1
+        apt-get install -y -qq nodejs >/dev/null 2>&1
+    elif command -v yum &> /dev/null; then
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - >/dev/null 2>&1
+        yum install -y -q nodejs >/dev/null 2>&1
+    fi
+    echo -e "  ✓ Node.js $(node -v 2>/dev/null) 安装完成"
+fi
+
+# 3. 创建目录
+echo -e "${YELLOW}[3/5] 创建安装目录...${NC}"
 mkdir -p "$INSTALL_DIR"
 mkdir -p "$DATA_DIR"
 
-# 3. 克隆代码（预构建模式：代码已包含所有依赖）
-echo -e "${YELLOW}[3/4] 下载程序文件...${NC}"
+# 4. 克隆代码（预构建模式：代码已包含所有依赖）
+echo -e "${YELLOW}[4/5] 下载程序文件...${NC}"
 
 # 清理旧版本（如果是升级）
 if [ -d "$INSTALL_DIR/.git" ]; then
@@ -92,8 +115,8 @@ chown -R root:root "$INSTALL_DIR"
 
 echo -e "  ✓ 程序文件部署完成"
 
-# 4. 初始化配置并启动服务
-echo -e "${YELLOW}[4/4] 初始化配置并启动服务...${NC}"
+# 5. 初始化配置并启动服务
+echo -e "${YELLOW}[5/5] 初始化配置并启动服务...${NC}"
 
 # 生成随机账号密码（仅首次安装时）
 if [ ! -f "$DATA_DIR/config.json" ]; then

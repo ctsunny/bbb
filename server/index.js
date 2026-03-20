@@ -4,10 +4,10 @@ const cron    = require('node-cron');
 const path    = require('path');
 const crypto  = require('crypto');
 const db      = require('./db');
-const { runMonitor, checkSite, discoverProducts } = require('./monitor');
+const { runMonitor, checkSite, discoverProducts, closeBrowser } = require('./monitor');
 require('dotenv').config();
 
-const VERSION = 'v1.7.4';
+const VERSION = 'v1.7.9';
 const app     = express();
 const PORT    = process.env.PORT || 3001;
 
@@ -41,11 +41,69 @@ const getSetting = (key) => safeGet('SELECT value FROM settings WHERE key = ?', 
 app.use(cors());
 app.use(express.json());
 
+// ── Rate Limiting Middleware (must be before routes) ─────────────────────────
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 分钟
+const RATE_LIMIT_MAX = 30; // 最多 30 次请求
+
+const rateLimit = (req, res, next) => {
+  const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+  const now = Date.now();
+  
+  if (!rateLimitMap.has(ip)) {
+    rateLimitMap.set(ip, { count: 1, startTime: now });
+    return next();
+  }
+  
+  const record = rateLimitMap.get(ip);
+  if (now - record.startTime > RATE_LIMIT_WINDOW) {
+    record.count = 1;
+    record.startTime = now;
+    return next();
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX) {
+    return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+  }
+  
+  record.count++;
+  next();
+};
+
+app.use('/api', rateLimit);
+
 // ── Auth Middleware ──────────────────────────────────────────────────────────
 const auth = (req, res, next) => {
   const token = req.headers['authorization'] || req.headers['Authorization'];
   if (token === getSetting('reg_token')) return next();
   return res.status(401).json({ error: 'Unauthorized' });
+};
+
+// ── SSRF Guard ───────────────────────────────────────────────────────────────
+// Returns true when the URL is safe (public), false when it must be blocked.
+const isPrivateHostname = (hostname) => {
+  if (hostname === 'localhost') return true;
+  // IPv4 private / loopback ranges
+  const ipv4Re = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const m = hostname.match(ipv4Re);
+  if (m) {
+    const [, a, b] = m.map(Number);
+    if (a === 127) return true;                    // 127.0.0.0/8
+    if (a === 10) return true;                     // 10.0.0.0/8
+    if (a === 192 && b === 168) return true;       // 192.168.0.0/16
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+    if (a === 169 && b === 254) return true;       // 169.254.0.0/16 link-local
+    if (a === 0) return true;                      // 0.0.0.0/8
+  }
+  return false;
+};
+
+const validatePublicUrl = (url) => {
+  let parsed;
+  try { parsed = new URL(url); } catch { return '无效的 URL 格式'; }
+  if (!['http:', 'https:'].includes(parsed.protocol)) return '只支持 HTTP/HTTPS 协议';
+  if (isPrivateHostname(parsed.hostname)) return '不允许访问内网地址';
+  return null; // OK
 };
 
 // ── API Wrapper ──────────────────────────────────────────────────────────────
@@ -89,31 +147,8 @@ app.get('/api/sites', auth, wrap((req, res) => {
 app.post('/api/sites', auth, wrap((req, res) => {
   const { url, name, interval } = req.body;
   
-  // URL 验证：防止 SSRF 和无效 URL
-  let validUrl;
-  try {
-    validUrl = new URL(url);
-    if (!['http:', 'https:'].includes(validUrl.protocol)) {
-      return res.status(400).json({ error: '只支持 HTTP/HTTPS 协议' });
-    }
-    // 阻止内网地址
-    const hostname = validUrl.hostname;
-    if (hostname === 'localhost' || 
-        hostname === '127.0.0.1' || 
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('10.') ||
-        hostname.startsWith('172.16.') ||
-        hostname.startsWith('172.17.') ||
-        hostname.startsWith('172.18.') ||
-        hostname.startsWith('172.19.') ||
-        hostname.startsWith('172.2') ||
-        hostname.startsWith('172.30.') ||
-        hostname.startsWith('172.31.')) {
-      return res.status(400).json({ error: '不允许访问内网地址' });
-    }
-  } catch {
-    return res.status(400).json({ error: '无效的 URL 格式' });
-  }
+  const urlError = validatePublicUrl(url);
+  if (urlError) return res.status(400).json({ error: urlError });
   
   const existing = safeGet('SELECT id FROM sites WHERE url = ?', url);
   if (existing) {
@@ -195,30 +230,8 @@ app.post('/api/settings', auth, wrap((req, res) => {
 app.post('/api/discover', auth, wrap(async (req, res) => {
   const { url } = req.body;
   
-  // URL 验证：防止 SSRF
-  let validUrl;
-  try {
-    validUrl = new URL(url);
-    if (!['http:', 'https:'].includes(validUrl.protocol)) {
-      return res.status(400).json({ error: '只支持 HTTP/HTTPS 协议' });
-    }
-    const hostname = validUrl.hostname;
-    if (hostname === 'localhost' || 
-        hostname === '127.0.0.1' || 
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('10.') ||
-        hostname.startsWith('172.16.') ||
-        hostname.startsWith('172.17.') ||
-        hostname.startsWith('172.18.') ||
-        hostname.startsWith('172.19.') ||
-        hostname.startsWith('172.2') ||
-        hostname.startsWith('172.30.') ||
-        hostname.startsWith('172.31.')) {
-      return res.status(400).json({ error: '不允许访问内网地址' });
-    }
-  } catch {
-    return res.status(400).json({ error: '无效的 URL 格式' });
-  }
+  const urlError = validatePublicUrl(url);
+  if (urlError) return res.status(400).json({ error: urlError });
   
   const products = await discoverProducts(url);
   res.json({ products });
@@ -253,45 +266,12 @@ app.use((req, res, next) => {
   res.status(403).send('<h1>403 Forbidden</h1><p>NanoMonitor Access Protocol Required (' + req.path + ' rejected)</p>');
 });
 
-// 速率限制中间件 (简单实现)
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 60000; // 1 分钟
-const RATE_LIMIT_MAX = 30; // 最多 30 次请求
-
-const rateLimit = (req, res, next) => {
-  const ip = req.ip || req.connection.remoteAddress || 'unknown';
-  const now = Date.now();
-  
-  if (!rateLimitMap.has(ip)) {
-    rateLimitMap.set(ip, { count: 1, startTime: now });
-    return next();
-  }
-  
-  const record = rateLimitMap.get(ip);
-  if (now - record.startTime > RATE_LIMIT_WINDOW) {
-    record.count = 1;
-    record.startTime = now;
-    return next();
-  }
-  
-  if (record.count >= RATE_LIMIT_MAX) {
-    return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
-  }
-  
-  record.count++;
-  next();
-};
-
-// 对 API 路由应用速率限制
-app.use('/api', rateLimit);
-
 cron.schedule('* * * * *', () => runMonitor());
 
 // 优雅关闭：清理浏览器实例和数据库连接
 const gracefulShutdown = async (signal) => {
   console.log(`\n收到 ${signal} 信号，正在优雅关闭...`);
   
-  const { closeBrowser } = require('./monitor');
   await closeBrowser();
   
   try {
