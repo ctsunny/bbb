@@ -243,7 +243,7 @@ if [ ! -f "$DATA_DIR/config.json" ]; then
     
     cat > "$DATA_DIR/config.json" <<EOF
 {
-  "port": 3000,
+  "port": 3001,
   "adminUser": "$ADMIN_USER",
   "adminPass": "$ADMIN_PASS",
   "accessPath": "$ACCESS_PATH",
@@ -299,13 +299,13 @@ sleep 3
 
 # 获取本机 IP
 IP_ADDR=$(curl -s ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
-PORT=3000
+PORT=3001
 
 echo -e ""
 echo -e "${GREEN}=========================================${NC}"
 echo -e "${GREEN}   🎉 安装成功！                      ${NC}"
 echo -e "${GREEN}=========================================${NC}"
-echo -e "${BLUE}📍 访问地址:${NC} http://${IP_ADDR}:${PORT}/${ACCESS_PATH}"
+echo -e "${BLUE}📍 访问地址:${NC} http://${IP_ADDR}:${PORT}/console-${ACCESS_PATH}"
 echo -e "${BLUE}👤 管理员账号:${NC} ${ADMIN_USER}"
 echo -e "${BLUE}🔑 管理员密码:${NC} ${ADMIN_PASS}"
 echo -e ""
