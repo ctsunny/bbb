@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer');
+const fs = require('fs');
 const db = require('./db');
 const { sendBarkNotification } = require('./notify');
 
@@ -8,6 +9,23 @@ const MAX_CHANGES_PER_SITE = 20;
 // ── 浏览器实例池 (修复资源泄漏) ───────────────────────────────────────────────
 let browserPool = null;
 let browserLock = false;
+
+// 自动检测系统 Chromium 路径（适配 PUPPETEER_EXECUTABLE_PATH 环境变量或常见安装路径）
+const getChromiumPath = () => {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+  const candidates = [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return undefined; // 使用 puppeteer 内置 Chromium
+};
 
 const getBrowser = async () => {
   if (browserPool && browserPool.isConnected()) {
@@ -39,13 +57,17 @@ const NOISE_KEYWORDS = ['版权所有', '备案号', 'ICP备', '网安备', '关
 const NOISE_LINE_RE = /^(\d{1,4}[:\-\/]\d{2}|\d+\.?\d*\s*(件|个|条|次|人|分钟前|小时前|天前|秒前|评论|浏览|收藏|点赞|已售|库存|剩余|还剩|in stock|left|%|折))$/i;
 
 // ── 启动浏览器 ──────────────────────────────────────────────────────────
-const launchBrowser = () => puppeteer.launch({ 
-  headless: 'new', 
-  args: [
-    '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
-    '--disable-gpu', '--window-size=1280,1000'
-  ] 
-});
+const launchBrowser = () => {
+  const executablePath = getChromiumPath();
+  return puppeteer.launch({
+    headless: 'new',
+    executablePath,
+    args: [
+      '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
+      '--disable-gpu', '--window-size=1280,1000'
+    ]
+  });
+};
 
 // ── 智能提取快照 (v1.7.4) ────────────────────────────────────────────────
 const extractSnapshot = async (page) => {
