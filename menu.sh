@@ -64,6 +64,14 @@ upgrade_service() {
     git pull origin "$BRANCH" >/dev/null 2>&1
     git reset --hard origin/"$BRANCH" >/dev/null 2>&1
     
+    # 重新安装 Node.js 依赖（确保原生模块与当前 Node.js 版本匹配）
+    echo "📦 更新 Node.js 依赖..."
+    cd "$INSTALL_DIR/server"
+    if ! npm install --production --no-audit --no-fund >/dev/null 2>&1; then
+        echo "⚠️  npm install 失败，服务可能无法正常启动"
+    fi
+    cd "$INSTALL_DIR"
+    
     # 恢复配置
     if [ -f "$DATA_DIR/.env.backup" ]; then
         cp -f "$DATA_DIR/.env.backup" "$INSTALL_DIR/.env" 2>/dev/null || true

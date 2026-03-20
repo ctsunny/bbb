@@ -38,6 +38,7 @@ echo -e "${YELLOW}[1/5] 安装系统依赖...${NC}"
 if command -v apt-get &> /dev/null; then
     apt-get update -qq >/dev/null 2>&1
     apt-get install -y -qq curl wget git ca-certificates unzip \
+        build-essential python3 \
         libgbm1 libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
         libdbus-1-3 libdrm2 libgtk-3-0 libnspr4 libnss3 libxkbcommon0 \
         libxrandr2 xdg-utils fonts-liberation libappindicator3-1 \
@@ -45,6 +46,7 @@ if command -v apt-get &> /dev/null; then
     echo -e "  ✓ Debian/Ubuntu 依赖安装完成"
 elif command -v yum &> /dev/null; then
     yum install -y -q curl wget git ca-certificates unzip \
+        gcc gcc-c++ make python3 \
         alsa-lib atk cups-libs dbus gtk3 libdrm libXcomposite libXdamage \
         libXext libXi libXtst pango nss xorg-x11-fonts-Type1 \
         xorg-x11-fonts-misc libXrender libAppIndicator libnss3 >/dev/null 2>&1 || true
@@ -190,6 +192,16 @@ chmod +x "$INSTALL_DIR/menu.sh" 2>/dev/null || true
 chown -R root:root "$INSTALL_DIR"
 
 echo -e "  ✓ 程序文件部署完成"
+
+# 安装 Node.js 依赖（编译 better-sqlite3 等原生模块）
+echo -e "  ${CYAN}安装 Node.js 依赖...${NC}"
+cd "$INSTALL_DIR/server"
+if ! npm install --production --no-audit --no-fund >/dev/null 2>&1; then
+    echo -e "${RED}❌ npm install 失败，请检查 Node.js 环境${NC}"
+    exit 1
+fi
+cd "$INSTALL_DIR"
+echo -e "  ✓ Node.js 依赖安装完成"
 
 # 5. 初始化配置并启动服务
 echo -e "${YELLOW}[5/5] 初始化配置并启动服务...${NC}"
