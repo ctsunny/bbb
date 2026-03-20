@@ -67,12 +67,88 @@ if command -v node &> /dev/null; then
 fi
 if [ "$NODE_OK" = false ]; then
     echo -e "  ${CYAN}安装 Node.js 20.x...${NC}"
+    NODE_INSTALLED=false
+
+    # 检测系统架构
+    ARCH=$(uname -m)
+    case "$ARCH" in
+        x86_64)  NODE_ARCH="x64" ;;
+        aarch64) NODE_ARCH="arm64" ;;
+        armv7l)  NODE_ARCH="armv7l" ;;
+        *)       NODE_ARCH="x64" ;;
+    esac
+    NODE_VERSION="20.19.0"
+
     if command -v apt-get &> /dev/null; then
-        curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1
-        apt-get install -y -qq nodejs >/dev/null 2>&1
+        # 方法1：尝试 NodeSource（设置超时避免无限等待）
+        echo -e "  ${CYAN}尝试从 NodeSource 安装...${NC}"
+        if curl -fsSL --connect-timeout 15 --max-time 60 https://deb.nodesource.com/setup_20.x 2>/dev/null | bash - >/dev/null 2>&1; then
+            if apt-get install -y -qq nodejs >/dev/null 2>&1 && command -v node &>/dev/null; then
+                NODE_INSTALLED=true
+            fi
+        fi
+
+        # 方法2：直接下载 Node.js 官方二进制包
+        if [ "$NODE_INSTALLED" = false ]; then
+            echo -e "  ${CYAN}NodeSource 不可用，直接下载 Node.js ${NODE_VERSION} 二进制包...${NC}"
+            NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"
+            if wget -q --timeout=60 --tries=2 -O /tmp/node.tar.xz "$NODE_URL" 2>/dev/null \
+               && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 >/dev/null 2>&1 \
+               && command -v node &>/dev/null; then
+                NODE_INSTALLED=true
+            fi
+            rm -f /tmp/node.tar.xz
+        fi
+
+        # 方法3：使用华为云镜像（适合国内/HK 用户）
+        if [ "$NODE_INSTALLED" = false ]; then
+            echo -e "  ${CYAN}尝试华为云镜像...${NC}"
+            HW_URL="https://mirrors.huaweicloud.com/nodejs/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"
+            if wget -q --timeout=60 --tries=2 -O /tmp/node.tar.xz "$HW_URL" 2>/dev/null \
+               && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 >/dev/null 2>&1 \
+               && command -v node &>/dev/null; then
+                NODE_INSTALLED=true
+            fi
+            rm -f /tmp/node.tar.xz
+        fi
+
     elif command -v yum &> /dev/null; then
-        curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - >/dev/null 2>&1
-        yum install -y -q nodejs >/dev/null 2>&1
+        # 方法1：尝试 NodeSource（设置超时避免无限等待）
+        echo -e "  ${CYAN}尝试从 NodeSource 安装...${NC}"
+        if curl -fsSL --connect-timeout 15 --max-time 60 https://rpm.nodesource.com/setup_20.x 2>/dev/null | bash - >/dev/null 2>&1; then
+            if yum install -y -q nodejs >/dev/null 2>&1 && command -v node &>/dev/null; then
+                NODE_INSTALLED=true
+            fi
+        fi
+
+        # 方法2：直接下载 Node.js 官方二进制包
+        if [ "$NODE_INSTALLED" = false ]; then
+            echo -e "  ${CYAN}NodeSource 不可用，直接下载 Node.js ${NODE_VERSION} 二进制包...${NC}"
+            NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"
+            if wget -q --timeout=60 --tries=2 -O /tmp/node.tar.xz "$NODE_URL" 2>/dev/null \
+               && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 >/dev/null 2>&1 \
+               && command -v node &>/dev/null; then
+                NODE_INSTALLED=true
+            fi
+            rm -f /tmp/node.tar.xz
+        fi
+
+        # 方法3：使用华为云镜像（适合国内/HK 用户）
+        if [ "$NODE_INSTALLED" = false ]; then
+            echo -e "  ${CYAN}尝试华为云镜像...${NC}"
+            HW_URL="https://mirrors.huaweicloud.com/nodejs/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"
+            if wget -q --timeout=60 --tries=2 -O /tmp/node.tar.xz "$HW_URL" 2>/dev/null \
+               && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 >/dev/null 2>&1 \
+               && command -v node &>/dev/null; then
+                NODE_INSTALLED=true
+            fi
+            rm -f /tmp/node.tar.xz
+        fi
+    fi
+
+    if [ "$NODE_INSTALLED" = false ]; then
+        echo -e "${RED}❌ Node.js 安装失败，请手动安装 Node.js 18+ 后重试${NC}"
+        exit 1
     fi
     echo -e "  ✓ Node.js $(node -v 2>/dev/null) 安装完成"
 fi
