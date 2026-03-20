@@ -2,7 +2,7 @@
 
 **一行命令安装 · 自动生成账号密码 · 菜单式管理**
 
-[![Version](https://img.shields.io/badge/version-v1.7.9-blue.svg)](https://github.com/ctsunny/bbb)
+[![Version](https://img.shields.io/badge/version-v1.8.4-blue.svg)](https://github.com/ctsunny/bbb)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ---
@@ -12,7 +12,7 @@
 ### 一、项目概述
 
 #### 1.1 项目定位
-NanoMonitor 是一款专为 Linux VPS 设计的轻量级网页内容变动监控工具（当前版本 **v1.7.9**）。它通过无头浏览器自动抓取指定网页，利用智能算法过滤广告、时间戳等噪音内容，精准识别页面核心内容的变化，并通过 Bark 推送实时通知用户。
+NanoMonitor 是一款专为 Linux VPS 设计的轻量级网页内容变动监控工具（当前版本 **v1.8.4**）。它通过无头浏览器自动抓取指定网页，利用智能算法过滤广告、时间戳等噪音内容，精准识别页面核心内容的变化，并通过 Bark 推送实时通知用户。
 
 #### 1.2 解决痛点
 - **手动刷新繁琐**：无需人工定期检查网页更新
@@ -255,7 +255,7 @@ sudo journalctl -u nanomon -n 30 --no-pager
 
 日志输出示例：
 ```
-🚀 NanoMonitor v1.7.9 已就绪！
+🚀 NanoMonitor v1.8.4 已就绪！
 🔗 专用后台路径: http://您的服务器IP:3001/console-a1b2c3d4abcd12ef
 🔑 登 录 账 号: admin
 🔑 登 录 密 码: 4a7f3c2e
@@ -332,7 +332,7 @@ nanomon
 
 ```
 ========================================
-   NanoMonitor 管理菜单 (v1.7.9)
+   NanoMonitor 管理菜单 (v1.8.4)
 ========================================
 1. 🔄 一键升级到最新版本
 2. 🔄 重启服务
@@ -553,7 +553,13 @@ sudo yum install -y \
 
 ## 📝 版本更新说明
 
-### v1.7.9（最新）
+### v1.8.4（最新）
+
+**新增 / 改进：**
+- ✅ 版本号更新至 v1.8.4
+- ✅ 安装脚本与管理菜单版本号同步更新
+
+### v1.7.9
 
 **新增 / 改进：**
 - ✅ 访问路径升级为 `/console-{token}` 格式，更安全
