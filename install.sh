@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# NanoMonitor 一键安装脚本 (v1.8.4)
+# NanoMonitor 一键安装脚本 (v1.8.5)
 # 极简设计：一行命令安装，自动显示登录信息
 # 管理命令：nanomon
 
@@ -22,7 +22,7 @@ REPO_URL="https://github.com/ctsunny/bbb.git"
 BRANCH="main"
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${BLUE}   NanoMonitor 一键安装脚本 (v1.8.4)   ${NC}"
+echo -e "${BLUE}   NanoMonitor 一键安装脚本 (v1.8.5)   ${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
 
