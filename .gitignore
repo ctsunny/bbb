@@ -1,1 +1,35 @@
-Nothing should be ignored since only a README.md file was modified and no build artifacts, dependencies, or temporary files were detected in the changes.
+# Dependencies
+node_modules/
+server/node_modules/
+client/node_modules/
+
+# Build output — client/dist is kept in repo (server serves it statically)
+# If you want to exclude it, run: npm run build in client/ before deploying
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# SQLite databases (runtime data)
+*.db
+*.db-shm
+*.db-wal
+server/monitor.db
+server/monitor.db-shm
+server/monitor.db-wal
+
+# Logs
+*.log
+log.txt
+log_utf8.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

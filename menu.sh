@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# NanoMonitor 管理菜单脚本 (v1.7.4)
+# NanoMonitor 管理菜单脚本 (v1.7.9)
 # 极简设计：一键升级、重启、查看日志、重置密码、卸载
 
 INSTALL_DIR="/opt/nanomon"
@@ -12,7 +12,7 @@ BRANCH="main"
 show_menu() {
     clear
     echo "========================================"
-    echo "   NanoMonitor 管理菜单 (v1.7.4)"
+    echo "   NanoMonitor 管理菜单 (v1.7.9)"
     echo "========================================"
     echo "1. 🔄 一键升级到最新版本"
     echo "2. 🔄 重启服务"
@@ -150,8 +150,8 @@ while true; do
         3) systemctl stop $SERVICE_NAME >/dev/null 2>&1 && echo "✅ 服务已停止" || echo "❌ 停止失败"; read -p "按回车键返回菜单..." ;;
         4) systemctl start $SERVICE_NAME >/dev/null 2>&1 && echo "✅ 服务已启动" || echo "❌ 启动失败"; read -p "按回车键返回菜单..." ;;
         5) view_logs ;;
-        6) uninstall_service ;;
-        7) reset_password ;;
+        6) reset_password ;;
+        7) uninstall_service ;;
         0) echo "退出."; exit 0 ;;
         *) echo "无效选项"; read -p "按回车键返回菜单..." ;;
     esac
