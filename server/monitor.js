@@ -48,13 +48,17 @@ const closeBrowser = async () => {
   }
 };
 
-// ── 噪音配置 (v1.7.4 精简) ───────────────────────────────────────────────────
+// ── 噪音配置 ─────────────────────────────────────────────────────────────────
 const IGNORE_TAGS = ['script', 'style', 'noscript', 'nav', 'footer', 'header', 'aside', 'iframe', 'svg', 'button', 'input', 'form'];
-// 移除 'notice' 等可能包含正文内容的关键词
-const IGNORE_CLASSES_IDS = ['menu', 'nav', 'footer', 'aside', 'copyright', 'sidebar', 'popup', 'modal', 'advert', 'breadcrumb', 'customer'];
+const IGNORE_CLASSES_IDS = [
+  'menu', 'nav', 'footer', 'aside', 'copyright', 'sidebar',
+  'popup', 'modal', 'advert', 'breadcrumb',
+  'topbar', 'top-bar', 'announce', 'float-btn', 'back-top', 'live-chat', 'online-service',
+];
 const NOISE_KEYWORDS = ['版权所有', '备案号', 'ICP备', '网安备', '关于我们', '投诉举报', '扫码关注', 'Copyright', 'All Rights Reserved'];
 
-const NOISE_LINE_RE = /^(\d{1,4}[:\-\/]\d{2}|\d+\.?\d*\s*(件|个|条|次|人|分钟前|小时前|天前|秒前|评论|浏览|收藏|点赞|已售|库存|剩余|还剩|in stock|left|%|折))$/i;
+// 注意：不过滤"折"（折扣信息属于重要商品内容）
+const NOISE_LINE_RE = /^(\d{1,4}[:\-\/]\d{2}|\d+\.?\d*\s*(件|个|条|次|人|分钟前|小时前|天前|秒前|评论|浏览|收藏|点赞|已售|库存|剩余|还剩|in stock|left|%))$/i;
 
 // ── 启动浏览器 ──────────────────────────────────────────────────────────
 const launchBrowser = () => {

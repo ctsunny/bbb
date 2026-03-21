@@ -228,6 +228,15 @@ export default function App() {
     setEditInterval(prev => { const n = {...prev}; delete n[siteId]; return n; });
   };
 
+  const testNotify = async () => {
+    try {
+      await api.post('/test-notify');
+      toast('🔔 测试通知已发送，请检查 Bark 设备', 'success');
+    } catch (err) {
+      toast('发送失败：' + (err.response?.data?.error || err.message), 'error');
+    }
+  };
+
   /* ──────────── Renders ──────────── */
   
   if (!isLoggedIn) return (
@@ -368,7 +377,10 @@ export default function App() {
                 <label className="form-label">Bark 通知令牌</label>
                 <input className="input-field" type="password" placeholder="留空则不推送" value={barkKey} onChange={e => setBarkKey(e.target.value)} />
               </div>
-              <button className="save-btn" onClick={() => api.post('/settings', { bark_key: barkKey }).then(() => toast('已更新', 'success'))}>保存配置</button>
+              <div className="btn-row">
+                <button className="save-btn" style={{flex:1.5}} onClick={() => api.post('/settings', { bark_key: barkKey }).then(() => toast('✅ 配置已保存', 'success')).catch(() => toast('保存失败', 'error'))}>保存配置</button>
+                <button className="btn-secondary" style={{flex:1}} onClick={testNotify} disabled={!barkKey} title="发送一条测试推送">🔔 测试</button>
+              </div>
             </div>
           </div>
           <div className="version-tag">ENGINE {VERSION}</div>
