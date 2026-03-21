@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# NanoMonitor 管理菜单脚本 (v1.8.5)
+# NanoMonitor 管理菜单脚本 (v1.8.6)
 # 极简设计：一键升级、重启、查看日志、重置密码、卸载
 
 INSTALL_DIR="/opt/nanomon"
@@ -12,7 +12,7 @@ BRANCH="main"
 show_menu() {
     clear
     echo "========================================"
-    echo "   NanoMonitor 管理菜单 (v1.8.5)"
+    echo "   NanoMonitor 管理菜单 (v1.8.6)"
     echo "========================================"
     echo "1. 🔄 一键升级到最新版本"
     echo "2. 🔄 重启服务"
@@ -80,12 +80,18 @@ upgrade_service() {
     # 设置权限
     chmod +x "$INSTALL_DIR/start.sh" 2>/dev/null || true
     chmod +x "$INSTALL_DIR/menu.sh" 2>/dev/null || true
-    
-    # 启动服务
-    systemctl start $SERVICE_NAME >/dev/null 2>&1
-    
+
+    # 重新加载 systemd 配置并重启服务
+    systemctl daemon-reload >/dev/null 2>&1
+    systemctl restart $SERVICE_NAME >/dev/null 2>&1
+    sleep 3
+
     echo ""
-    echo "✅ 升级成功！"
+    if systemctl is-active --quiet $SERVICE_NAME; then
+        echo "✅ 升级成功，服务已自动重启！"
+    else
+        echo "✅ 升级完成，但服务启动异常，请手动执行：systemctl start $SERVICE_NAME"
+    fi
     echo "💡 备份文件：$BACKUP_FILE"
     read -p "按回车键返回菜单..."
 }
