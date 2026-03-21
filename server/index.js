@@ -227,6 +227,13 @@ app.post('/api/settings', auth, wrap((req, res) => {
   res.json({ success: true });
 }));
 
+app.post('/api/test-notify', auth, wrap(async (req, res) => {
+  const barkKey = getSetting('bark_key');
+  if (!barkKey) return res.status(400).json({ error: '请先配置 Bark 通知令牌' });
+  await sendBarkNotification('🧪 NanoMonitor 测试', 'Bark 通知配置正常，连接成功！', '');
+  res.json({ success: true });
+}));
+
 app.post('/api/discover', auth, wrap(async (req, res) => {
   const { url } = req.body;
   
